@@ -10,6 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Book
 import androidx.compose.material.icons.filled.Bookmark
+import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
@@ -32,6 +33,7 @@ import com.hotaro.quranreader.ui.viewmodel.HomeViewModel
 fun HomeScreen(
     onContinueClick: (Surah, Int) -> Unit,
     onBookmarkClick: (Bookmark) -> Unit,
+    onQiblaClick: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -54,30 +56,44 @@ fun HomeScreen(
             }
         }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
+        Box(
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            contentAlignment = Alignment.TopCenter
         ) {
-            item {
-                TimeAndPrayerCard(
-                    currentTime = uiState.currentTime,
-                    prayerTimes = uiState.prayerTimes
-                )
-            }
+            LazyColumn(
+                modifier = Modifier
+                    .widthIn(max = 840.dp)
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp)
+            ) {
+                item {
+                    TimeAndPrayerCard(
+                        currentTime = uiState.currentTime,
+                        prayerTimes = uiState.prayerTimes
+                    )
+                }
 
-            item {
-                LastReadCard(
-                    surah = uiState.lastReadSurah,
-                    ayahNumber = uiState.lastReadAyah,
-                    onClick = { uiState.lastReadSurah?.let { onContinueClick(it, uiState.lastReadAyah) } }
-                )
-            }
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        QiblaCard(
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            onClick = onQiblaClick
+                        )
+                        LastReadCard(
+                            surah = uiState.lastReadSurah,
+                            ayahNumber = uiState.lastReadAyah,
+                            modifier = Modifier.weight(1f).fillMaxHeight(),
+                            onClick = { uiState.lastReadSurah?.let { onContinueClick(it, uiState.lastReadAyah) } }
+                        )
+                    }
+                }
 
-            item {
-                Text(
+                item {
+                    Text(
                     text = "Recent Bookmarks",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
@@ -120,6 +136,7 @@ fun HomeScreen(
             }
             
             item { Spacer(modifier = Modifier.height(80.dp)) }
+        }
         }
     }
 }
@@ -196,10 +213,11 @@ fun PrayerTimeItem(prayer: PrayerTime) {
 fun LastReadCard(
     surah: Surah?,
     ayahNumber: Int,
+    modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
@@ -261,6 +279,47 @@ fun BookmarkItem(
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun QiblaCard(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.tertiaryContainer
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Default.Explore, 
+                contentDescription = null, 
+                modifier = Modifier.size(32.dp),
+                tint = MaterialTheme.colorScheme.onTertiaryContainer
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            Column {
+                Text(
+                    text = "Qibla Finder", 
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                )
+                Text(
+                    text = "Find the direction of the Kaaba",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f)
                 )
             }
         }

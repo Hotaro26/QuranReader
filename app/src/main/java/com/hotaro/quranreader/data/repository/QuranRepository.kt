@@ -55,6 +55,7 @@ class QuranRepository @Inject constructor(
     val selectedTranslation = preferenceManager.selectedTranslation
     val themeMode = preferenceManager.themeMode
     val colorPalette = preferenceManager.colorPalette
+    val appFont = preferenceManager.appFont
     val use24HourFormat = preferenceManager.use24HourFormat
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
@@ -71,6 +72,10 @@ class QuranRepository @Inject constructor(
 
     suspend fun saveColorPalette(palette: String) {
         preferenceManager.saveColorPalette(palette)
+    }
+
+    suspend fun saveAppFont(font: String) {
+        preferenceManager.saveAppFont(font)
     }
 
     suspend fun saveUse24HourFormat(use24Hour: Boolean) {

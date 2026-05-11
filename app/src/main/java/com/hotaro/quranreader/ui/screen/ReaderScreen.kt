@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -64,7 +65,7 @@ fun ReaderScreen(
                 title = { Text(surahName) },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
@@ -80,15 +81,19 @@ fun ReaderScreen(
                 CircularProgressIndicator()
             }
         } else {
-            LazyColumn(
-                state = listState,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+            Box(
+                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                contentAlignment = Alignment.TopCenter
             ) {
-                items(ayahs) { ayah ->
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .widthIn(max = 840.dp)
+                        .fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    items(ayahs) { ayah ->
                     val isBookmarked = bookmarks.any { it.surahNumber == surahNumber && it.ayahNumber == ayah.numberInSurah }
                     AyahItem(
                         ayah = ayah,
@@ -96,6 +101,7 @@ fun ReaderScreen(
                         onBookmarkClick = { viewModel.toggleBookmark(ayah) }
                     )
                 }
+            }
             }
         }
     }

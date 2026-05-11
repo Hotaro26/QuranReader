@@ -24,4 +24,10 @@ class ThemeViewModel @Inject constructor(
         SharingStarted.WhileSubscribed(5000),
         "dynamic"
     )
+
+    val appFont = repository.appFont.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        "default"
+    )
 }

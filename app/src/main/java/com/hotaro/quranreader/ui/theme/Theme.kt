@@ -112,6 +112,7 @@ fun getPalette(darkTheme: Boolean, paletteName: String): ColorScheme {
 fun QuranReaderTheme(
     themeMode: Int = 0, // 0: System, 1: Light, 2: Dark
     paletteName: String = "dynamic",
+    appFont: String = "default",
     content: @Composable () -> Unit
 ) {
     val darkTheme = when (themeMode) {
@@ -148,7 +149,7 @@ fun QuranReaderTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = getTypography(appFont),
         content = content
     )
 }

@@ -19,6 +19,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -40,6 +41,7 @@ fun SettingsScreen(
     val colorPalette by viewModel.colorPalette.collectAsState()
     val use24HourFormat by viewModel.use24HourFormat.collectAsState()
     val selectedTranslation by viewModel.selectedTranslation.collectAsState()
+    val appFont by viewModel.appFont.collectAsState()
     val editions by viewModel.filteredEditions.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
@@ -55,14 +57,18 @@ fun SettingsScreen(
             )
         }
     ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+        Box(
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            contentAlignment = Alignment.TopCenter
         ) {
-            item {
+            LazyColumn(
+                modifier = Modifier
+                    .widthIn(max = 840.dp)
+                    .fillMaxSize(),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
                 SupportDevCard(
                     onSupportClick = {
                         val payeeName = "Hotaro"
@@ -91,21 +97,13 @@ fun SettingsScreen(
             }
 
             item {
-                ThemeSelection(
-                    currentMode = themeMode,
-                    onModeSelected = { viewModel.setThemeMode(it) }
-                )
-            }
-
-            item {
-                PaletteSelection(
-                    currentPalette = colorPalette,
-                    onPaletteSelected = { viewModel.setColorPalette(it) }
-                )
-            }
-
-            item {
-                ClockFormatSelection(
+                CustomizeCard(
+                    themeMode = themeMode,
+                    onThemeModeSelected = { viewModel.setThemeMode(it) },
+                    colorPalette = colorPalette,
+                    onPaletteSelected = { viewModel.setColorPalette(it) },
+                    appFont = appFont,
+                    onFontSelected = { viewModel.setAppFont(it) },
                     use24HourFormat = use24HourFormat,
                     onFormatSelected = { viewModel.setUse24HourFormat(it) }
                 )
@@ -124,6 +122,16 @@ fun SettingsScreen(
                     modifier = Modifier.clickable { showTranslationDialog = true }
                 )
             }
+
+            item {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                Text(text = "About", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            }
+
+            item {
+                AboutAppCard()
+            }
+        }
         }
     }
 
@@ -268,37 +276,17 @@ fun SearchBar(
 }
 
 @Composable
-fun ThemeSelection(
-    currentMode: Int,
-    onModeSelected: (Int) -> Unit
+fun CustomizeCard(
+    themeMode: Int,
+    onThemeModeSelected: (Int) -> Unit,
+    colorPalette: String,
+    onPaletteSelected: (String) -> Unit,
+    appFont: String,
+    onFontSelected: (String) -> Unit,
+    use24HourFormat: Boolean,
+    onFormatSelected: (Boolean) -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Icon(Icons.Default.Visibility, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Theme Mode", style = MaterialTheme.typography.titleSmall)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                listOf("System" to 0, "Light" to 1, "Dark" to 2).forEach { (label, mode) ->
-                    FilterChip(
-                        selected = currentMode == mode,
-                        onClick = { onModeSelected(mode) },
-                        label = { Text(label) }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun PaletteSelection(
-    currentPalette: String,
-    onPaletteSelected: (String) -> Unit
-) {
-    val palettes = mutableListOf(
+    val palettes = listOf(
         "Material You" to "dynamic",
         "Classic Green" to "classic",
         "Lavender" to "lavender",
@@ -308,54 +296,113 @@ fun PaletteSelection(
         "Monochrome" to "monochrome"
     )
 
+    val fonts = listOf(
+        "Default" to "default",
+        "Hey Comic" to "hey_comic",
+        "KG Happy" to "kghappy",
+        "Matcha Cih" to "matcha_cih",
+        "Nirakolu" to "nirakolu",
+        "Romantic Sunrise" to "romantic_sunrise",
+        "Takeover" to "takeover",
+        "Takeover 3D" to "takeover_3d"
+    )
+
+    val themes = listOf(
+        "System" to 0,
+        "Light" to 1,
+        "Dark" to 2
+    )
+
     Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Icon(Icons.Default.ColorLens, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Color Palette", style = MaterialTheme.typography.titleSmall)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            FlowRow(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                palettes.forEach { (label, palette) ->
-                    FilterChip(
-                        selected = currentPalette == palette,
-                        onClick = { onPaletteSelected(palette) },
-                        label = { Text(label) }
-                    )
-                }
-            }
+        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            SettingDropdown(
+                label = "Theme Mode",
+                icon = Icons.Default.Visibility,
+                currentValue = themes.find { it.second == themeMode }?.first ?: "System",
+                options = themes,
+                onOptionSelected = { onThemeModeSelected(it) }
+            )
+
+            SettingDropdown(
+                label = "Color Palette",
+                icon = Icons.Default.ColorLens,
+                currentValue = palettes.find { it.second == colorPalette }?.first ?: "Material You",
+                options = palettes,
+                onOptionSelected = { onPaletteSelected(it) }
+            )
+
+            SettingDropdown(
+                label = "App Font",
+                icon = Icons.Default.TextFields,
+                currentValue = fonts.find { it.second == appFont }?.first ?: "Default",
+                options = fonts,
+                onOptionSelected = { onFontSelected(it) }
+            )
+
+            SettingDropdown(
+                label = "Clock Format",
+                icon = Icons.Default.Schedule,
+                currentValue = if (use24HourFormat) "24-hour" else "12-hour",
+                options = listOf("12-hour" to false, "24-hour" to true),
+                onOptionSelected = { onFormatSelected(it) }
+            )
         }
     }
 }
 
 @Composable
-fun ClockFormatSelection(
-    use24HourFormat: Boolean,
-    onFormatSelected: (Boolean) -> Unit
+fun <T> SettingDropdown(
+    label: String,
+    icon: ImageVector,
+    currentValue: String,
+    options: List<Pair<String, T>>,
+    onOptionSelected: (T) -> Unit
 ) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Icon(Icons.Default.Schedule, contentDescription = null)
+    var expanded by remember { mutableStateOf(false) }
+
+    Column {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "Clock Format", style = MaterialTheme.typography.titleSmall)
+                Text(text = label, style = MaterialTheme.typography.titleSmall)
             }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(
-                    selected = !use24HourFormat,
-                    onClick = { onFormatSelected(false) },
-                    label = { Text("12-hour") }
-                )
-                FilterChip(
-                    selected = use24HourFormat,
-                    onClick = { onFormatSelected(true) },
-                    label = { Text("24-hour") }
-                )
+
+            Box {
+                Surface(
+                    onClick = { expanded = true },
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(text = currentValue, style = MaterialTheme.typography.labelLarge)
+                        Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
+                    }
+                }
+
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false }
+                ) {
+                    options.forEach { (optionLabel, value) ->
+                        DropdownMenuItem(
+                            text = { Text(optionLabel) },
+                            onClick = {
+                                onOptionSelected(value)
+                                expanded = false
+                            }
+                        )
+                    }
+                }
             }
         }
     }
@@ -373,4 +420,60 @@ private fun FlowRow(
         horizontalArrangement = horizontalArrangement,
         content = content
     )
+}
+
+@Composable
+fun AboutAppCard() {
+    val context = LocalContext.current
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        )
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(text = "About App / Dev", style = MaterialTheme.typography.titleMedium)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = "Developed with ❤️ by Hotaro",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedButton(onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Hotaro26"))
+                    context.startActivity(intent)
+                }) {
+                    Icon(Icons.Default.Link, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("GitHub")
+                }
+                OutlinedButton(onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.pinterest.com/hotaro344/"))
+                    context.startActivity(intent)
+                }) {
+                    Icon(Icons.Default.Link, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text("Pinterest")
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "Tech Stack & APIs",
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "• Jetpack Compose & Kotlin\n• Hilt for Dependency Injection\n• Retrofit & Gson for Networking\n• Room & DataStore for Local Data\n• Quran API by Fawaz Ahmed",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }

@@ -20,6 +20,7 @@ class PreferenceManager @Inject constructor(private val context: Context) {
         val SELECTED_TRANSLATION = stringPreferencesKey("selected_translation")
         val THEME_MODE = intPreferencesKey("theme_mode")
         val COLOR_PALETTE = stringPreferencesKey("color_palette")
+        val APP_FONT = stringPreferencesKey("app_font")
         val USE_24_HOUR_FORMAT = booleanPreferencesKey("use_24_hour_format")
     }
 
@@ -41,6 +42,10 @@ class PreferenceManager @Inject constructor(private val context: Context) {
 
     val colorPalette: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[PreferencesKeys.COLOR_PALETTE] ?: "default"
+    }
+
+    val appFont: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.APP_FONT] ?: "default"
     }
 
     val use24HourFormat: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -69,6 +74,12 @@ class PreferenceManager @Inject constructor(private val context: Context) {
     suspend fun saveColorPalette(palette: String) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.COLOR_PALETTE] = palette
+        }
+    }
+
+    suspend fun saveAppFont(font: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.APP_FONT] = font
         }
     }
 

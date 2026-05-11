@@ -23,6 +23,7 @@ class SettingsViewModel @Inject constructor(
     val colorPalette = repository.colorPalette.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "dynamic")
     val use24HourFormat = repository.use24HourFormat.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
     val selectedTranslation = repository.selectedTranslation.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "eng-mustafakhattabg")
+    val appFont = repository.appFont.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "default")
 
     val filteredEditions = combine(_editions, _searchQuery) { editions, query ->
         if (query.isBlank()) {
@@ -69,6 +70,12 @@ class SettingsViewModel @Inject constructor(
     fun setColorPalette(palette: String) {
         viewModelScope.launch {
             repository.saveColorPalette(palette)
+        }
+    }
+
+    fun setAppFont(font: String) {
+        viewModelScope.launch {
+            repository.saveAppFont(font)
         }
     }
 
