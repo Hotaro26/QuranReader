@@ -19,7 +19,7 @@ Quran Reader is a modern, feature-rich Android application built with Jetpack Co
 - **Local Storage:** Your progress and bookmarks are saved locally using Room and DataStore.
 
  > [!TIP]
-> Use **translation** feature to change ayah/Surah language. It supports almost 1200+ local lang.
+> Use **translation** feature to change ayah/Surah language. It supports almost 400+ local lang.
 
 ## Screenshots
 
