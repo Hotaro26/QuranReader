@@ -21,26 +21,24 @@ Quran Reader is a modern, feature-rich Android application built with Jetpack Co
 
 <table>
   <tr>
-    <td align="center" width="50%">
+    <td align="center" width="33%">
       <img src="https://github.com/user-attachments/assets/cbe4474e-1c27-4ce4-b262-78aafa03ebca" width="100%" alt="Screenshot 1"/>
     </td>
-    <td align="center" width="50%">
+    <td align="center" width="33%">
       <img src="https://github.com/user-attachments/assets/914bb42f-31ef-4c9c-9017-6041d987832c" width="100%" alt="Screenshot 2"/>
     </td>
-  </tr>
-  <tr>
-    <td align="center" width="50%">
+    <td align="center" width="33%">
       <img src="https://github.com/user-attachments/assets/f92f3c85-5267-491f-8c59-dc70d5439f39" width="100%" alt="Screenshot 3"/>
     </td>
-    <td align="center" width="50%">
-      <img src="https://github.com/user-attachments/assets/6c2de71f-f90e-4cff-8ec0-2c2dfa443ce6" width="100%" alt="Screenshot 4"/>
-    </td>
   </tr>
   <tr>
-    <td align="center" width="50%">
+    <td align="center" width="33%">
+      <img src="https://github.com/user-attachments/assets/6c2de71f-f90e-4cff-8ec0-2c2dfa443ce6" width="100%" alt="Screenshot 4"/>
+    </td>
+    <td align="center" width="33%">
       <img src="https://github.com/user-attachments/assets/366eed50-d2c9-485f-8990-3d4697cadf6e" width="100%" alt="Screenshot 5"/>
     </td>
-    <td align="center" width="50%">
+    <td align="center" width="33%">
       <img src="https://github.com/user-attachments/assets/bfe2013d-d1e5-4dd9-b29c-618759398333" width="100%" alt="Screenshot 6"/>
     </td>
   </tr>
