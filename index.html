@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuranReader - A Calming & Seamless Quran App</title>
+    <meta name="description" content="Experience a calming and seamless Quran reading experience with QuranReader. Built with Jetpack Compose and Material Expressive UI.">
+    <meta property="og:title" content="QuranReader - A Calming Quran App">
+    <meta property="og:description" content="Modern, feature-rich Quran reading app with Uthmani script and real-time prayer times.">
+    <meta property="og:image" content="https://github.com/Hotaro26/QuranReader/raw/main/icon.png">
+    <link rel="icon" type="image/png" href="https://github.com/Hotaro26/QuranReader/raw/main/icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Amiri:wght@700&family=Luckiest+Guy&family=Love+Ya+Like+A+Sister&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        :root {
+            --primary: #8f4c38; /* Mocha default */
+            --primary-rgb: 143, 76, 56;
+            --primary-gradient: #c46d54;
+            --on-primary: #ffffff;
+            --primary-container: #ffdbd1;
+            --on-primary-container: #3a0b01;
+            --surface: #fdf7ff;
+            --surface-rgb: 253, 247, 255;
+            --on-surface: #1d1b20;
+            --surface-variant: #e7e0eb;
+            --outline: #79747e;
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Dark Mode Variant */
+        [data-mode="dark"] {
+            --surface: #121212;
+            --surface-rgb: 18, 18, 18;
+            --on-surface: #e6e1e5;
+            --surface-variant: #2d2d2d;
+            --outline: #938f99;
+        }
+
+        /* Theme Variants */
+        [data-theme="lavender"] {
+            --primary: #6750A4;
+            --primary-rgb: 103, 80, 164;
+            --primary-gradient: #9a82db;
+            --primary-container: #EADDFF;
+            --on-primary-container: #21005D;
+        }
+        [data-theme="green"] {
+            --primary: #386a20;
+            --primary-rgb: 56, 106, 32;
+            --primary-gradient: #5ba835;
+            --primary-container: #b8f397;
+            --on-primary-container: #042100;
+        }
+        [data-theme="mocha"] {
+            --primary: #8f4c38;
+            --primary-rgb: 143, 76, 56;
+            --primary-gradient: #c46d54;
+            --primary-container: #ffdbd1;
+            --on-primary-container: #3a0b01;
+        }
+        [data-theme="pink"] {
+            --primary: #904a6d;
+            --primary-rgb: 144, 74, 109;
+            --primary-gradient: #c06593;
+            --primary-container: #ffd8e4;
+            --on-primary-container: #3d0725;
+        }
+        [data-theme="catppuccin"] {
+            --primary: #cba6f7;
+            --primary-rgb: 203, 166, 247;
+            --primary-gradient: #b4befe;
+            --primary-container: #45475a;
+            --on-primary-container: #cdd6f4;
+            --surface: #1e1e2e;
+            --surface-rgb: 30, 30, 46;
+            --on-surface: #cdd6f4;
+            --surface-variant: #313244;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Love Ya Like A Sister', sans-serif;
+            background-color: var(--surface);
+            color: var(--on-surface);
+            line-height: 1.6;
+            overflow-x: hidden;
+            transition: background-color 0.5s ease, color 0.5s ease;
+            font-size: 1.1rem;
+        }
+
+        header {
+            padding: 2rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 100;
+            background: rgba(var(--surface-rgb), 0.8);
+            backdrop-filter: blur(10px);
+            transition: background 0.5s ease;
+        }
+
+        .nav-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .mode-toggle {
+            background: none;
+            border: none;
+            color: var(--on-surface);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            order: 2; /* Ensures it stays right of nav-links */
+        }
+
+        .mode-toggle:hover {
+            background: var(--surface-variant);
+            color: var(--primary);
+        }
+
+        .mode-toggle svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        .logo {
+            font-family: 'Luckiest Guy', cursive;
+            font-size: 1.8rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .logo-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            order: 1;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--on-surface);
+            font-weight: 700;
+            opacity: 0.8;
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover {
+            opacity: 1;
+            color: var(--primary);
+        }
+
+        .hero {
+            padding: 15rem 5% 5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            min-height: 80vh;
+        }
+
+        .hero h1 {
+            font-family: 'Luckiest Guy', cursive;
+            font-size: 5.5rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: 2px;
+            background: linear-gradient(45deg, var(--primary), var(--primary-gradient));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: var(--transition);
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.5rem;
+            max-width: 700px;
+            margin-bottom: 2.5rem;
+            opacity: 0.9;
+        }
+
+        .btn {
+            padding: 1.2rem 3rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 1.2rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--on-primary);
+            box-shadow: 0 8px 25px rgba(var(--primary-rgb), 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 12px 30px rgba(var(--primary-rgb), 0.4);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 3.5rem;
+            margin: 5rem 0 3rem;
+            transition: var(--transition);
+            font-family: 'Luckiest Guy', cursive;
+            color: var(--primary);
+        }
+
+        .features {
+            padding: 6rem 5%;
+            background-color: var(--surface-variant);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 3rem;
+            transition: background-color 0.5s ease;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            padding: 3rem;
+            border-radius: 30px;
+            transition: var(--transition);
+            border: 2px solid transparent;
+            text-align: center;
+        }
+
+        .feature-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            font-family: 'Luckiest Guy', cursive;
+        }
+
+        .feature-card p {
+            font-size: 1.1rem;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-15px);
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+            transition: var(--transition);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .feature-icon svg {
+            width: 48px;
+            height: 48px;
+        }
+
+        .screenshots {
+            padding: 5rem 0;
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .carousel-container {
+            position: relative;
+            overflow: hidden;
+            padding: 3rem 0;
+            width: 100%;
+        }
+
+        .screenshot-track {
+            display: flex;
+            transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+            gap: 2.5rem;
+            padding: 0;
+            will-change: transform;
+            align-items: center;
+        }
+
+        .screenshot-card {
+            min-width: 280px;
+            width: 280px;
+            height: 580px;
+            border-radius: 40px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: #000;
+            border: 10px solid #1d1b20;
+            flex-shrink: 0;
+            transition: transform 0.7s ease, opacity 0.7s ease, filter 0.7s ease;
+            opacity: 0.3;
+            transform: scale(0.85);
+            filter: blur(2px);
+        }
+
+        .screenshot-card.active {
+            opacity: 1;
+            transform: scale(1.05);
+            filter: blur(0);
+            box-shadow: 0 25px 60px rgba(var(--primary-rgb), 0.4);
+            border-color: var(--on-surface);
+        }
+
+        .screenshot-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .carousel-nav {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 56px;
+            height: 56px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: var(--transition);
+        }
+
+        .carousel-nav:hover {
+            background: var(--on-primary-container);
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .carousel-nav.prev { left: 2rem; }
+        .carousel-nav.next { right: 2rem; }
+
+        @media (max-width: 768px) {
+            .carousel-nav { width: 40px; height: 40px; }
+            .carousel-nav.prev { left: 0.5rem; }
+            .carousel-nav.next { right: 0.5rem; }
+            .hero h1 { font-size: 2.5rem; }
+            .nav-links { display: none; }
+        }
+
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 2rem;
+        }
+
+        .carousel-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--surface-variant);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .carousel-dot.active {
+            background: var(--primary);
+            width: 24px;
+            border-radius: 10px;
+        }
+
+        .customization {
+            padding: 5rem 5%;
+            text-align: center;
+        }
+
+        .theme-selector {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .theme-dot {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: var(--transition);
+        }
+
+        .theme-dot.active {
+            border-color: var(--on-surface);
+            transform: scale(1.2);
+        }
+
+        .dot-lavender { background-color: #6750A4; }
+        .dot-green { background-color: #386a20; }
+        .dot-mocha { background-color: #8f4c38; }
+        .dot-pink { background-color: #904a6d; }
+        .dot-catppuccin { background-color: #cba6f7; }
+
+        .tech-stack {
+            padding: 5rem 5%;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .tech-item {
+            background: var(--surface-variant);
+            padding: 2rem;
+            border-radius: 20px;
+            text-align: center;
+            transition: var(--transition);
+        }
+
+        .tech-item:hover {
+            background: var(--primary-container);
+            transform: scale(1.05);
+        }
+
+        .tech-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            background: var(--primary);
+            color: var(--on-primary);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .download-section {
+            padding: 5rem 5%;
+        }
+
+        .download-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-gradient));
+            padding: 4rem 2rem;
+            border-radius: 40px;
+            text-align: center;
+            color: var(--on-primary);
+            box-shadow: 0 20px 40px rgba(var(--primary-rgb), 0.3);
+        }
+
+        .download-card h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .download-btns {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 2.5rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-outline {
+            border: 2px solid var(--on-primary);
+            color: var(--on-primary);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255,255,255,0.1);
+        }
+
+        footer {
+            padding: 4rem 5%;
+            text-align: center;
+            border-top: 1px solid var(--surface-variant);
+            margin-top: 5rem;
+        }
+
+        .footer-links {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        .mobile-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            z-index: 1000;
+            order: 3;
+            padding: 8px;
+        }
+
+        .mobile-toggle svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        @media (max-width: 968px) {
+            .mobile-toggle {
+                display: block;
+            }
+
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 70%;
+                height: 100vh;
+                background: var(--surface);
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 2rem;
+                transition: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: -10px 0 30px rgba(0,0,0,0.1);
+                z-index: 900;
+            }
+
+            .nav-links.active {
+                right: 0;
+            }
+
+            .hero h1 { font-size: 3.5rem; }
+            .hero p { font-size: 1.2rem; }
+            .section-title { font-size: 2.5rem; }
+            .download-card h2 { font-size: 2.5rem; }
+            .download-card p { font-size: 1.2rem; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 2.5rem; }
+            .hero { padding-top: 12rem; }
+            .btn { width: 100%; justify-content: center; }
+            .carousel-nav { width: 44px; height: 44px; }
+            .carousel-nav.prev { left: 0.5rem; }
+            .carousel-nav.next { right: 0.5rem; }
+            .screenshot-card { min-width: 240px; width: 240px; height: 500px; }
+        }
+
+        .back-to-top {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: var(--transition);
+            opacity: 0;
+            visibility: hidden;
+            z-index: 1000;
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .back-to-top:hover {
+            transform: translateY(-5px);
+            background: var(--on-primary-container);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate {
+            animation: fadeIn 0.8s ease forwards;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">
+            <div class="logo-icon">
+                <img src="https://github.com/Hotaro26/QuranReader/raw/main/icon.png" alt="QuranReader Logo">
+            </div>
+            QuranReader
+        </a>
+        <div class="nav-container">
+            <nav class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#screenshots">App</a>
+                <a href="#customization">Themes</a>
+                <a href="https://github.com/Hotaro26/QuranReader" target="_blank">GitHub</a>
+            </nav>
+            <button class="mode-toggle" id="modeToggle" aria-label="Toggle Dark Mode">
+                <i data-lucide="moon"></i>
+            </button>
+            <button class="mobile-toggle" aria-label="Toggle Menu">
+                <i data-lucide="menu"></i>
+            </button>
+        </div>
+    </header>
+
+    <section class="hero animate">
+        <h1>Read, Reflect, Connect.</h1>
+        <p>A calming and seamless Quran reading experience following Material Expressive UI principles. Designed for focus and peace.</p>
+        <a href="https://github.com/Hotaro26/QuranReader" class="btn btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+            View on GitHub
+        </a>
+    </section>
+
+    <h2 id="features" class="section-title">Why QuranReader?</h2>
+    <section class="features">
+        <div class="feature-card animate" style="animation-delay: 0.1s;">
+            <div class="feature-icon"><i data-lucide="sparkles"></i></div>
+            <h3>Modern UI</h3>
+            <p>Built with Jetpack Compose and Material Expressive UI for a fluid, tactile experience.</p>
+        </div>
+        <div class="feature-card animate" style="animation-delay: 0.2s;">
+            <div class="feature-icon"><i data-lucide="book-open"></i></div>
+            <h3>Uthmani Script</h3>
+            <p>High-quality Arabic text with support for over 1,200 translations worldwide.</p>
+        </div>
+        <div class="feature-card animate" style="animation-delay: 0.3s;">
+            <div class="feature-icon"><i data-lucide="clock"></i></div>
+            <h3>Prayer Times</h3>
+            <p>Real-time local prayer times integrated directly into your dashboard.</p>
+        </div>
+        <div class="feature-card animate" style="animation-delay: 0.4s;">
+            <div class="feature-icon"><i data-lucide="palette"></i></div>
+            <h3>Customizable</h3>
+            <p>Multiple color palettes including Catppuccin, Lavender, and Material You.</p>
+        </div>
+    </section>
+
+    <h2 id="screenshots" class="section-title">The Experience</h2>
+    <section class="screenshots">
+        <button class="carousel-nav prev" onclick="moveCarousel(-1)" aria-label="Previous Screenshot">❮</button>
+        <div class="carousel-container">
+            <div class="screenshot-track">
+                <div class="screenshot-card"><img src="https://github.com/user-attachments/assets/cbe4474e-1c27-4ce4-b262-78aafa03ebca" alt="App Dashboard showing prayer times and last read position"></div>
+                <div class="screenshot-card"><img src="https://github.com/user-attachments/assets/914bb42f-31ef-4c9c-9017-6041d987832c" alt="Surah List showing 114 Surahs with Arabic and English names"></div>
+                <div class="screenshot-card"><img src="https://github.com/user-attachments/assets/f92f3c85-5267-491f-8c59-dc70d5439f39" alt="Reading View with Uthmani script and translations"></div>
+                <div class="screenshot-card"><img src="https://github.com/user-attachments/assets/6c2de71f-f90e-4cff-8ec0-2c2dfa443ce6" alt="Settings menu with theme and color palette options"></div>
+                <div class="screenshot-card"><img src="https://github.com/user-attachments/assets/366eed50-d2c9-485f-8990-3d4697cadf6e" alt="Translation Selection menu with search and many languages"></div>
+                <div class="screenshot-card"><img src="https://github.com/user-attachments/assets/bfe2013d-d1e5-4dd9-b29c-618759398333" alt="Theme Customization preview showing different color modes"></div>
+            </div>
+        </div>
+        <button class="carousel-nav next" onclick="moveCarousel(1)" aria-label="Next Screenshot">❯</button>
+        <div class="carousel-dots" id="carouselDots" role="tablist" aria-label="Screenshot Gallery Navigation"></div>
+    </section>
+
+    <section id="customization" class="customization">
+        <h2 class="section-title">Calming Themes</h2>
+        <p>Choose a mood that fits your reading environment.</p>
+        <div class="theme-selector">
+            <div class="theme-dot dot-lavender" onclick="setTheme('lavender', this)"></div>
+            <div class="theme-dot dot-green" onclick="setTheme('green', this)"></div>
+            <div class="theme-dot dot-mocha active" onclick="setTheme('mocha', this)"></div>
+            <div class="theme-dot dot-pink" onclick="setTheme('pink', this)"></div>
+            <div class="theme-dot dot-catppuccin" onclick="setTheme('catppuccin', this)"></div>
+        </div>
+    </section>
+
+    <section id="tech" class="tech-stack animate">
+        <h2 class="section-title">Built with Modern Tech</h2>
+        <div class="tech-grid">
+            <div class="tech-item">
+                <span class="tech-tag">UI</span>
+                <h4>Jetpack Compose</h4>
+                <p>Declarative Material UI</p>
+            </div>
+            <div class="tech-item">
+                <span class="tech-tag">Language</span>
+                <h4>Kotlin</h4>
+                <p>Modern & Type-safe</p>
+            </div>
+            <div class="tech-item">
+                <span class="tech-tag">Arch</span>
+                <h4>MVVM + Hilt</h4>
+                <p>Clean & Scalable code</p>
+            </div>
+            <div class="tech-item">
+                <span class="tech-tag">Data</span>
+                <h4>Room & DataStore</h4>
+                <p>Robust offline support</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="download-section animate">
+        <div class="download-card">
+            <h2>Ready for a calming experience?</h2>
+            <p>Download the latest version and start your journey today.</p>
+            <div class="download-btns">
+                <a href="https://github.com/Hotaro26/QuranReader/releases" class="btn btn-primary">
+                    Download APK
+                </a>
+                <a href="https://github.com/Hotaro26/QuranReader" class="btn btn-outline">
+                    Star on GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <p>© 2024 QuranReader by Hotaro26</p>
+        <div class="footer-links">
+            <a href="https://github.com/Hotaro26/QuranReader" target="_blank" style="color: var(--primary); text-decoration: none;">GitHub Repository</a>
+        </div>
+    </footer>
+
+    <button class="back-to-top" id="backToTop" aria-label="Back to Top">
+        <i data-lucide="arrow-up"></i>
+    </button>
+
+    <script>
+        let currentSlide = 0;
+        const track = document.querySelector('.screenshot-track');
+        const cards = document.querySelectorAll('.screenshot-card');
+        const dotsContainer = document.getElementById('carouselDots');
+        let autoPlayInterval;
+
+        // Initialize dots
+        cards.forEach((_, i) => {
+            const dot = document.createElement('div');
+            dot.classList.add('carousel-dot');
+            dot.setAttribute('role', 'tab');
+            dot.setAttribute('aria-label', `Go to slide ${i + 1}`);
+            if (i === 0) {
+                dot.classList.add('active');
+                dot.setAttribute('aria-selected', 'true');
+            } else {
+                dot.setAttribute('aria-selected', 'false');
+            }
+            dot.onclick = () => {
+                stopAutoPlay();
+                goToSlide(i);
+            };
+            dotsContainer.appendChild(dot);
+        });
+
+        function updateCarousel() {
+            const container = document.querySelector('.carousel-container');
+            const containerWidth = container.offsetWidth;
+            const cardWidth = cards[0].offsetWidth;
+            const gap = parseFloat(getComputedStyle(track).gap) || 40;
+            
+            // The exact pixel center of the active card
+            const offset = (containerWidth / 2) - (cardWidth / 2) - (currentSlide * (cardWidth + gap));
+            
+            track.style.transform = `translateX(${offset}px)`;
+            
+            // Update dots and card active state
+            document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+                const isActive = i === currentSlide;
+                dot.classList.toggle('active', isActive);
+                dot.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                cards[i].classList.toggle('active', isActive);
+            });
+        }
+
+        // Initialize carousel on load to ensure images/layout are ready
+        window.addEventListener('load', () => {
+            updateCarousel();
+            startAutoPlay();
+            lucide.createIcons();
+        });
+
+        // Handle resize
+        window.addEventListener('resize', updateCarousel);
+        
+        // Immediate call as fallback
+        updateCarousel();
+
+        function moveCarousel(direction) {
+            currentSlide = (currentSlide + direction + cards.length) % cards.length;
+            updateCarousel();
+        }
+
+        function goToSlide(index) {
+            currentSlide = index;
+            updateCarousel();
+        }
+
+        function startAutoPlay() {
+            if (autoPlayInterval) stopAutoPlay();
+            autoPlayInterval = setInterval(() => {
+                moveCarousel(1);
+            }, 5000);
+        }
+
+        function stopAutoPlay() {
+            clearInterval(autoPlayInterval);
+        }
+
+        // Stop auto-play on user interaction
+        document.querySelectorAll('.carousel-nav').forEach(btn => {
+            btn.addEventListener('click', stopAutoPlay);
+        });
+
+        // Mobile menu toggle
+        const mobileToggle = document.querySelector('.mobile-toggle');
+        const navLinks = document.querySelector('.nav-links');
+        
+        mobileToggle.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+            const icon = mobileToggle.querySelector('i');
+            const isOpened = navLinks.classList.contains('active');
+            icon.setAttribute('data-lucide', isOpened ? 'x' : 'menu');
+            lucide.createIcons();
+        });
+
+        // Close menu on link click
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                navLinks.classList.remove('active');
+                mobileToggle.querySelector('i').setAttribute('data-lucide', 'menu');
+                lucide.createIcons();
+            });
+        });
+
+        // Dark Mode Logic
+        const modeToggle = document.getElementById('modeToggle');
+        
+        function toggleMode() {
+            const currentMode = document.body.getAttribute('data-mode');
+            const newMode = currentMode === 'dark' ? 'light' : 'dark';
+            document.body.setAttribute('data-mode', newMode);
+            
+            // Update icon
+            const icon = modeToggle.querySelector('i');
+            icon.setAttribute('data-lucide', newMode === 'dark' ? 'sun' : 'moon');
+            lucide.createIcons();
+            
+            // Save preference
+            localStorage.setItem('quran-reader-mode', newMode);
+        }
+
+        modeToggle.addEventListener('click', toggleMode);
+
+        // Load saved mode
+        const savedMode = localStorage.getItem('quran-reader-mode');
+        if (savedMode) {
+            document.body.setAttribute('data-mode', savedMode);
+            const icon = modeToggle.querySelector('i');
+            icon.setAttribute('data-lucide', savedMode === 'dark' ? 'sun' : 'moon');
+        }
+
+        const backToTop = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                backToTop.classList.add('visible');
+            } else {
+                backToTop.classList.remove('visible');
+            }
+        });
+
+        backToTop.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        function setTheme(theme, el) {
+            document.body.setAttribute('data-theme', theme);
+            
+            // Update active dot
+            document.querySelectorAll('.theme-dot').forEach(dot => dot.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            threshold: 0.1
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('animate');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-card, .section-title').forEach(el => {
+            observer.observe(el);
+        });
+    </script>
+</body>
+</html>
