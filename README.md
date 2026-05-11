@@ -17,6 +17,10 @@ Quran Reader is a modern, feature-rich Android application built with Jetpack Co
     - **Translation Selection:** Search and choose from dozens of available translations via the API.
 - **Prayer Times:** View prayer times based on your local time.
 - **Local Storage:** Your progress and bookmarks are saved locally using Room and DataStore.
+
+ > [!TIP]
+> Use **translation** feature to change ayah/Surah language. It supports almost 1200+ local lang.
+
 ## Screenshots
 
 <table>
