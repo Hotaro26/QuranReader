@@ -1,0 +1,14 @@
+[
+    {
+        "merged": "com.hotaro.quranreader.app-merged_res-69:/drawable_ic_launcher.png.flat",
+        "source": "com.hotaro.quranreader.app-main-70:/drawable/ic_launcher.png"
+    },
+    {
+        "merged": "com.hotaro.quranreader.app-merged_res-69:/drawable_app_icon.png.flat",
+        "source": "com.hotaro.quranreader.app-main-70:/drawable/app_icon.png"
+    },
+    {
+        "merged": "com.hotaro.quranreader.app-merged_res-69:/drawable_ic_launcher_foreground.xml.flat",
+        "source": "com.hotaro.quranreader.app-main-70:/drawable/ic_launcher_foreground.xml"
+    }
+]
