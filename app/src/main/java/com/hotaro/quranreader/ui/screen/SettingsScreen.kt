@@ -304,7 +304,8 @@ fun CustomizeCard(
         "Nirakolu" to "nirakolu",
         "Romantic Sunrise" to "romantic_sunrise",
         "Takeover" to "takeover",
-        "Takeover 3D" to "takeover_3d"
+        "Takeover 3D" to "takeover_3d",
+        "Scratch Boys" to "scratch_boys"
     )
 
     val themes = listOf(

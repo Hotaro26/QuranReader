@@ -22,6 +22,9 @@ class PreferenceManager @Inject constructor(private val context: Context) {
         val COLOR_PALETTE = stringPreferencesKey("color_palette")
         val APP_FONT = stringPreferencesKey("app_font")
         val USE_24_HOUR_FORMAT = booleanPreferencesKey("use_24_hour_format")
+        val RAMADAN_MODE_ACTIVE = booleanPreferencesKey("ramadan_mode_active")
+        val RAMADAN_REGION = stringPreferencesKey("ramadan_region")
+        val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
     }
 
     val lastReadSurah: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -50,6 +53,18 @@ class PreferenceManager @Inject constructor(private val context: Context) {
 
     val use24HourFormat: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[PreferencesKeys.USE_24_HOUR_FORMAT] ?: true
+    }
+
+    val ramadanModeActive: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.RAMADAN_MODE_ACTIVE] ?: false
+    }
+
+    val ramadanRegion: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.RAMADAN_REGION] ?: "Middle East"
+    }
+
+    val hasCompletedOnboarding: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] ?: false
     }
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
@@ -88,4 +103,23 @@ class PreferenceManager @Inject constructor(private val context: Context) {
             preferences[PreferencesKeys.USE_24_HOUR_FORMAT] = use24Hour
         }
     }
+
+    suspend fun saveRamadanModeActive(active: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.RAMADAN_MODE_ACTIVE] = active
+        }
+    }
+
+    suspend fun saveRamadanRegion(region: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.RAMADAN_REGION] = region
+        }
+    }
+
+    suspend fun saveHasCompletedOnboarding(completed: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] = completed
+        }
+    }
+
 }

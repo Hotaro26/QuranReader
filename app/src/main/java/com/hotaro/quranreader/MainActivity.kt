@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Mosque
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -29,11 +30,14 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.hotaro.quranreader.ui.screen.HomeScreen
+import com.hotaro.quranreader.ui.screen.OnboardingScreen
 import com.hotaro.quranreader.ui.screen.QiblaScreen
 import com.hotaro.quranreader.ui.screen.ReaderScreen
 import com.hotaro.quranreader.ui.screen.SettingsScreen
 import com.hotaro.quranreader.ui.screen.SurahListScreen
+import com.hotaro.quranreader.ui.screen.TrackerScreen
 import com.hotaro.quranreader.ui.theme.QuranReaderTheme
+import com.hotaro.quranreader.ui.viewmodel.OnboardingViewModel
 import com.hotaro.quranreader.ui.viewmodel.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -43,10 +47,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
-            val themeMode by themeViewModel.themeMode.collectAsState()
-            val colorPalette by themeViewModel.colorPalette.collectAsState()
-            val appFont by themeViewModel.appFont.collectAsState()
-
+            val themeMode by themeViewModel.themeMode.collectAsState(initial = 0)
+            val colorPalette by themeViewModel.colorPalette.collectAsState(initial = "classic")
+            val appFont by themeViewModel.appFont.collectAsState(initial = "default")
+            
             QuranReaderTheme(
                 themeMode = themeMode,
                 paletteName = colorPalette,
@@ -76,10 +80,11 @@ fun QuranApp() {
     val items = listOf(
         BottomNavItem("home", "Home", Icons.Default.Home),
         BottomNavItem("surahs", "Surahs", Icons.Default.Mosque),
+        BottomNavItem("tracker", "Tracker", Icons.Default.TaskAlt),
         BottomNavItem("settings", "Settings", Icons.Default.Settings)
     )
 
-    val showNavBar = currentDestination?.route in listOf("home", "surahs", "settings")
+    val showNavBar = currentDestination?.route in listOf("home", "surahs", "tracker", "settings")
 
     Row(modifier = Modifier.fillMaxSize()) {
         if (isWideScreen && showNavBar) {
@@ -164,6 +169,9 @@ fun QuranApp() {
                             navController.navigate("reader/${surah.number}/${surah.englishName}")
                         }
                     )
+                }
+                composable("tracker") {
+                    TrackerScreen()
                 }
                 composable(
                     route = "reader/{surahNumber}/{surahName}?ayah={ayahNumber}",

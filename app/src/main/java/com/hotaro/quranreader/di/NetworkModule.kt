@@ -1,6 +1,7 @@
 package com.hotaro.quranreader.di
 
 import com.hotaro.quranreader.data.remote.QuranApiService
+import com.hotaro.quranreader.data.remote.ExternalApiService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -26,5 +27,11 @@ object NetworkModule {
     @Singleton
     fun provideQuranApiService(retrofit: Retrofit): QuranApiService {
         return retrofit.create(QuranApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideExternalApiService(retrofit: Retrofit): ExternalApiService {
+        return retrofit.create(ExternalApiService::class.java)
     }
 }

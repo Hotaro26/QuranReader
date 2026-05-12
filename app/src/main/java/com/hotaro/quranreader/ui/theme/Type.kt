@@ -16,6 +16,7 @@ val Nirakolu = FontFamily(Font(R.font.nirakolu))
 val RomanticSunrise = FontFamily(Font(R.font.romantic_sunrise))
 val Takeover = FontFamily(Font(R.font.takeover))
 val Takeover3d = FontFamily(Font(R.font.takeover_3d))
+val ScratchBoys = FontFamily(Font(R.font.scratch_boys))
 
 fun getTypography(fontName: String): Typography {
     val mainFontFamily = when (fontName) {
@@ -26,6 +27,7 @@ fun getTypography(fontName: String): Typography {
         "romantic_sunrise" -> RomanticSunrise
         "takeover" -> Takeover
         "takeover_3d" -> Takeover3d
+        "scratch_boys" -> ScratchBoys
         else -> DefaultFont
     }
 

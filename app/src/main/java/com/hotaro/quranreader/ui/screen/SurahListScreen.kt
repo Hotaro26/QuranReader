@@ -75,13 +75,6 @@ fun SurahCard(surah: Surah, onClick: () -> Unit) {
                     modifier = Modifier.size(48.dp),
                     tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
                 )
-                Text(
-                    text = surah.number.toString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
             }
             
             Spacer(modifier = Modifier.width(16.dp))

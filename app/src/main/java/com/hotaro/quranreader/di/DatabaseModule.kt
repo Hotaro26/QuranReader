@@ -5,6 +5,8 @@ import androidx.room.Room
 import com.hotaro.quranreader.data.local.BookmarkDao
 import com.hotaro.quranreader.data.local.PreferenceManager
 import com.hotaro.quranreader.data.local.QuranDatabase
+import com.hotaro.quranreader.data.local.TodoDao
+import com.hotaro.quranreader.data.local.RamadanDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,12 +25,24 @@ object DatabaseModule {
             context,
             QuranDatabase::class.java,
             "quran_db"
-        ).build()
+        )
+        .fallbackToDestructiveMigration()
+        .build()
     }
 
     @Provides
     fun provideBookmarkDao(database: QuranDatabase): BookmarkDao {
         return database.bookmarkDao()
+    }
+
+    @Provides
+    fun provideTodoDao(database: QuranDatabase): TodoDao {
+        return database.todoDao()
+    }
+
+    @Provides
+    fun provideRamadanDao(database: QuranDatabase): RamadanDao {
+        return database.ramadanDao()
     }
 
     @Provides

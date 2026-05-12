@@ -3,6 +3,7 @@ package com.hotaro.quranreader.data.repository
 import com.hotaro.quranreader.data.SurahData
 import com.hotaro.quranreader.data.local.*
 import com.hotaro.quranreader.data.model.*
+import com.hotaro.quranreader.data.remote.ExternalApiService
 import com.hotaro.quranreader.data.remote.QuranApiService
 import com.hotaro.quranreader.data.remote.toDomain
 import kotlinx.coroutines.flow.Flow
@@ -13,7 +14,10 @@ import javax.inject.Singleton
 @Singleton
 class QuranRepository @Inject constructor(
     private val apiService: QuranApiService,
+    private val externalApiService: ExternalApiService,
     private val bookmarkDao: BookmarkDao,
+    private val todoDao: TodoDao,
+    private val ramadanDao: RamadanDao,
     private val preferenceManager: PreferenceManager
 ) {
 
@@ -49,6 +53,65 @@ class QuranRepository @Inject constructor(
         return bookmarkDao.isBookmarked(surahNumber, ayahNumber)
     }
 
+    // Todos
+    fun getAllTodos(): Flow<List<Todo>> {
+        return todoDao.getAllTodos().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    suspend fun addTodo(todo: Todo) {
+        todoDao.insertTodo(todo.toEntity())
+    }
+
+    suspend fun updateTodo(todo: Todo) {
+        todoDao.updateTodo(todo.toEntity())
+    }
+
+    suspend fun deleteTodo(todo: Todo) {
+        todoDao.deleteTodo(todo.toEntity())
+    }
+
+    suspend fun clearCompletedTodos() {
+        todoDao.clearCompletedTodos()
+    }
+
+    // Ramadan Tracker
+    fun getAllRamadanDays(): Flow<List<RamadanDay>> {
+        return ramadanDao.getAllDays().map { entities ->
+            if (entities.isEmpty()) {
+                // Initialize if empty
+                val initialDays = (1..30).map { RamadanDay(it) }
+                initialDays
+            } else {
+                entities.map { it.toDomain() }
+            }
+        }
+    }
+
+    suspend fun updateRamadanDay(day: RamadanDay) {
+        ramadanDao.insertDay(day.toEntity())
+    }
+
+    suspend fun updateRamadanFasted(day: Int, fasted: Boolean) {
+        ramadanDao.updateFasted(day, fasted)
+    }
+
+    suspend fun updateRamadanTaraweeh(day: Int, prayed: Boolean) {
+        ramadanDao.updateTaraweeh(day, prayed)
+    }
+
+    suspend fun updateRamadanQuranRead(day: Int, read: Boolean) {
+        ramadanDao.updateQuranRead(day, read)
+    }
+
+    // External APIs
+    suspend fun getUpcomingHolidays(countryCode: String) = 
+        externalApiService.getUpcomingHolidays(countryCode)
+
+    suspend fun getWeather(lat: Double, lon: Double) = 
+        externalApiService.getWeather(lat, lon)
+
     // Preferences
     val lastReadSurah = preferenceManager.lastReadSurah
     val lastReadAyah = preferenceManager.lastReadAyah
@@ -57,6 +120,9 @@ class QuranRepository @Inject constructor(
     val colorPalette = preferenceManager.colorPalette
     val appFont = preferenceManager.appFont
     val use24HourFormat = preferenceManager.use24HourFormat
+    val ramadanModeActive = preferenceManager.ramadanModeActive
+    val ramadanRegion = preferenceManager.ramadanRegion
+    val hasCompletedOnboarding = preferenceManager.hasCompletedOnboarding
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
         preferenceManager.saveLastRead(surah, ayah)
@@ -80,6 +146,18 @@ class QuranRepository @Inject constructor(
 
     suspend fun saveUse24HourFormat(use24Hour: Boolean) {
         preferenceManager.saveUse24HourFormat(use24Hour)
+    }
+
+    suspend fun saveRamadanModeActive(active: Boolean) {
+        preferenceManager.saveRamadanModeActive(active)
+    }
+
+    suspend fun saveRamadanRegion(region: String) {
+        preferenceManager.saveRamadanRegion(region)
+    }
+
+    suspend fun saveHasCompletedOnboarding(completed: Boolean) {
+        preferenceManager.saveHasCompletedOnboarding(completed)
     }
 
     // Surah List
