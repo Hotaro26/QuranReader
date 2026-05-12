@@ -816,6 +816,7 @@
     </button>
 
     <script>
+        let autoPlayInterval;
         const carousels = {
             phone: {
                 currentSlide: 0,
@@ -925,9 +926,8 @@
         
         mobileToggle.addEventListener('click', () => {
             navLinks.classList.toggle('active');
-            const icon = mobileToggle.querySelector('i');
             const isOpened = navLinks.classList.contains('active');
-            icon.setAttribute('data-lucide', isOpened ? 'x' : 'menu');
+            mobileToggle.innerHTML = `<i data-lucide="${isOpened ? 'x' : 'menu'}"></i>`;
             lucide.createIcons();
         });
 
@@ -935,7 +935,7 @@
         document.querySelectorAll('.nav-links a').forEach(link => {
             link.addEventListener('click', () => {
                 navLinks.classList.remove('active');
-                mobileToggle.querySelector('i').setAttribute('data-lucide', 'menu');
+                mobileToggle.innerHTML = '<i data-lucide="menu"></i>';
                 lucide.createIcons();
             });
         });
@@ -949,8 +949,7 @@
             document.body.setAttribute('data-mode', newMode);
             
             // Update icon
-            const icon = modeToggle.querySelector('i');
-            icon.setAttribute('data-lucide', newMode === 'dark' ? 'sun' : 'moon');
+            modeToggle.innerHTML = `<i data-lucide="${newMode === 'dark' ? 'sun' : 'moon'}"></i>`;
             lucide.createIcons();
             
             // Save preference
@@ -963,8 +962,7 @@
         const savedMode = localStorage.getItem('quran-reader-mode');
         if (savedMode) {
             document.body.setAttribute('data-mode', savedMode);
-            const icon = modeToggle.querySelector('i');
-            icon.setAttribute('data-lucide', savedMode === 'dark' ? 'sun' : 'moon');
+            modeToggle.innerHTML = `<i data-lucide="${savedMode === 'dark' ? 'sun' : 'moon'}"></i>`;
         }
 
         const backToTop = document.getElementById('backToTop');
