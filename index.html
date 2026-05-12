@@ -314,6 +314,28 @@
             width: 100%;
         }
 
+        .carousel-container::before,
+        .carousel-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            width: 25%;
+            height: 100%;
+            z-index: 5;
+            pointer-events: none;
+            transition: background 0.5s ease;
+        }
+
+        .carousel-container::before {
+            left: 0;
+            background: linear-gradient(to right, var(--surface) 0%, transparent 100%);
+        }
+
+        .carousel-container::after {
+            right: 0;
+            background: linear-gradient(to left, var(--surface) 0%, transparent 100%);
+        }
+
         .screenshot-track {
             display: flex;
             transition: transform 0.7s cubic-bezier(0.25, 1, 0.5, 1);
@@ -329,7 +351,6 @@
             height: 580px;
             border-radius: 40px;
             overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             background: #000;
             border: 10px solid #1d1b20;
             flex-shrink: 0;
@@ -343,8 +364,9 @@
             opacity: 1;
             transform: scale(1.05);
             filter: blur(0);
-            box-shadow: 0 25px 60px rgba(var(--primary-rgb), 0.4);
             border-color: var(--on-surface);
+            z-index: 6;
+            position: relative;
         }
 
         .screenshot-card img {
