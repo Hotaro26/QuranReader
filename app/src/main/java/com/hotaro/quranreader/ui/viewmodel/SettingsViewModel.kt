@@ -24,6 +24,7 @@ class SettingsViewModel @Inject constructor(
     val use24HourFormat = repository.use24HourFormat.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
     val selectedTranslation = repository.selectedTranslation.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "eng-mustafakhattabg")
     val appFont = repository.appFont.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "default")
+    val prayerCalculationMethod = repository.prayerCalculationMethod.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2)
 
     val filteredEditions = combine(_editions, _searchQuery) { editions, query ->
         if (query.isBlank()) {
@@ -82,6 +83,12 @@ class SettingsViewModel @Inject constructor(
     fun setUse24HourFormat(use24Hour: Boolean) {
         viewModelScope.launch {
             repository.saveUse24HourFormat(use24Hour)
+        }
+    }
+
+    fun setPrayerCalculationMethod(method: Int) {
+        viewModelScope.launch {
+            repository.savePrayerCalculationMethod(method)
         }
     }
 }

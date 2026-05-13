@@ -1,5 +1,12 @@
 package com.hotaro.quranreader.ui.screen
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.view.HapticFeedbackConstants
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -14,14 +21,13 @@ import androidx.compose.material.icons.filled.Explore
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hotaro.quranreader.data.model.Bookmark
 import com.hotaro.quranreader.data.model.PrayerTime
@@ -37,6 +43,11 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val view = LocalView.current
+
+    LaunchedEffect(Unit) {
+        viewModel.fetchLocation()
+    }
 
     Scaffold(
         topBar = {
@@ -47,7 +58,10 @@ fun HomeScreen(
         floatingActionButton = {
             uiState.lastReadSurah?.let { surah ->
                 ExtendedFloatingActionButton(
-                    onClick = { onContinueClick(surah, uiState.lastReadAyah) },
+                    onClick = { 
+                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        onContinueClick(surah, uiState.lastReadAyah) 
+                    },
                     icon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
                     text = { Text("Continue") },
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -70,7 +84,8 @@ fun HomeScreen(
                 item {
                     TimeAndPrayerCard(
                         currentTime = uiState.currentTime,
-                        prayerTimes = uiState.prayerTimes
+                        prayerTimes = uiState.prayerTimes,
+                        cityName = uiState.cityName
                     )
                 }
 
@@ -144,7 +159,8 @@ fun HomeScreen(
 @Composable
 fun TimeAndPrayerCard(
     currentTime: String,
-    prayerTimes: List<PrayerTime>
+    prayerTimes: List<PrayerTime>,
+    cityName: String
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -159,7 +175,7 @@ fun TimeAndPrayerCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text(text = "Current Time", style = MaterialTheme.typography.labelMedium)
+                    Text(text = if (cityName.isNotEmpty()) "Current Time in $cityName" else "Current Time", style = MaterialTheme.typography.labelMedium)
                     Text(
                         text = currentTime,
                         style = MaterialTheme.typography.displayMedium,
@@ -216,10 +232,14 @@ fun LastReadCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val view = LocalView.current
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable {
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                onClick()
+            },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer
         )
@@ -253,10 +273,14 @@ fun BookmarkItem(
     bookmark: Bookmark,
     onClick: () -> Unit
 ) {
+    val view = LocalView.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick)
+            .clickable {
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                onClick()
+            }
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -290,10 +314,14 @@ fun QiblaCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val view = LocalView.current
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable {
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                onClick()
+            },
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.tertiaryContainer
         )

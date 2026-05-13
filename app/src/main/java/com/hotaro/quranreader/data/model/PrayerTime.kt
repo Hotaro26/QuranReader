@@ -19,6 +19,13 @@ object PrayerTimeProvider {
             "Isha" to "20:00"
         )
 
+        return formatPrayerTimes(rawTimes, use24HourFormat)
+    }
+
+    fun formatPrayerTimes(
+        rawTimes: List<Pair<String, String>>,
+        use24HourFormat: Boolean
+    ): List<PrayerTime> {
         val inputFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
         val outputFormat = if (use24HourFormat) {
             SimpleDateFormat("HH:mm", Locale.getDefault())
@@ -27,9 +34,10 @@ object PrayerTimeProvider {
         }
 
         return rawTimes.map { (name, time) ->
-            val date = inputFormat.parse(time) ?: Date()
+            val cleanTime = time.take(5)
+            val date = inputFormat.parse(cleanTime) ?: Date()
             val formattedTime = outputFormat.format(date)
-            PrayerTime(name, formattedTime, isNext = isNextPrayer(time))
+            PrayerTime(name, formattedTime, isNext = isNextPrayer(cleanTime))
         }
     }
 

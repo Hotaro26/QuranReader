@@ -1,8 +1,19 @@
 package com.hotaro.quranreader
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.view.HapticFeedbackConstants
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,13 +24,12 @@ import androidx.compose.material.icons.filled.Mosque
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -76,6 +86,25 @@ fun QuranApp() {
     val currentDestination = navBackStackEntry?.destination
     val configuration = LocalConfiguration.current
     val isWideScreen = configuration.screenWidthDp > 600
+    val view = LocalView.current
+    val context = LocalContext.current
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ -> }
+
+    LaunchedEffect(Unit) {
+        val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+        if (!hasPermission) {
+            permissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
 
     val items = listOf(
         BottomNavItem("home", "Home", Icons.Default.Home),
@@ -93,11 +122,21 @@ fun QuranApp() {
             ) {
                 Spacer(Modifier.weight(1f))
                 items.forEach { item ->
+                    val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                    val scale by animateFloatAsState(
+                        targetValue = if (isSelected) 1.2f else 1f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        ),
+                        label = "scale"
+                    )
                     NavigationRailItem(
-                        icon = { Icon(item.icon, contentDescription = item.label) },
+                        icon = { Icon(item.icon, contentDescription = item.label, modifier = Modifier.scale(scale)) },
                         label = { Text(item.label) },
-                        selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
+                        selected = isSelected,
                         onClick = {
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                             navController.navigate(item.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
@@ -121,11 +160,21 @@ fun QuranApp() {
                         tonalElevation = 0.dp
                     ) {
                         items.forEach { item ->
+                            val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+                            val scale by animateFloatAsState(
+                                targetValue = if (isSelected) 1.2f else 1f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessLow
+                                ),
+                                label = "scale"
+                            )
                             NavigationBarItem(
-                                icon = { Icon(item.icon, contentDescription = item.label) },
+                                icon = { Icon(item.icon, contentDescription = item.label, modifier = Modifier.scale(scale)) },
                                 label = { Text(item.label) },
-                                selected = currentDestination?.hierarchy?.any { it.route == item.route } == true,
+                                selected = isSelected,
                                 onClick = {
+                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                                     navController.navigate(item.route) {
                                         popUpTo(navController.graph.findStartDestination().id) {
                                             saveState = true

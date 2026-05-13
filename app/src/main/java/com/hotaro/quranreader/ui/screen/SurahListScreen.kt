@@ -1,5 +1,7 @@
 package com.hotaro.quranreader.ui.screen
 
+import android.view.HapticFeedbackConstants
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -52,10 +54,14 @@ fun SurahListScreen(
 
 @Composable
 fun SurahCard(surah: Surah, onClick: () -> Unit) {
+    val view = LocalView.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable {
+                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                onClick()
+            },
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,

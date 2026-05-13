@@ -112,6 +112,9 @@ class QuranRepository @Inject constructor(
     suspend fun getWeather(lat: Double, lon: Double) = 
         externalApiService.getWeather(lat, lon)
 
+    suspend fun getPrayerTimings(lat: Double, lon: Double, method: Int) =
+        externalApiService.getPrayerTimings(lat, lon, method)
+
     // Preferences
     val lastReadSurah = preferenceManager.lastReadSurah
     val lastReadAyah = preferenceManager.lastReadAyah
@@ -123,6 +126,7 @@ class QuranRepository @Inject constructor(
     val ramadanModeActive = preferenceManager.ramadanModeActive
     val ramadanRegion = preferenceManager.ramadanRegion
     val hasCompletedOnboarding = preferenceManager.hasCompletedOnboarding
+    val prayerCalculationMethod = preferenceManager.prayerCalculationMethod
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
         preferenceManager.saveLastRead(surah, ayah)
@@ -158,6 +162,10 @@ class QuranRepository @Inject constructor(
 
     suspend fun saveHasCompletedOnboarding(completed: Boolean) {
         preferenceManager.saveHasCompletedOnboarding(completed)
+    }
+
+    suspend fun savePrayerCalculationMethod(method: Int) {
+        preferenceManager.savePrayerCalculationMethod(method)
     }
 
     // Surah List

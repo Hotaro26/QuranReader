@@ -42,6 +42,7 @@ fun SettingsScreen(
     val use24HourFormat by viewModel.use24HourFormat.collectAsState()
     val selectedTranslation by viewModel.selectedTranslation.collectAsState()
     val appFont by viewModel.appFont.collectAsState()
+    val prayerCalculationMethod by viewModel.prayerCalculationMethod.collectAsState()
     val editions by viewModel.filteredEditions.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
 
@@ -49,6 +50,15 @@ fun SettingsScreen(
     var showSupportDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val myUpiId = "sakibreza035@okaxis"
+
+    val calculationMethods = listOf(
+        "Shia Ithna-Ashari" to 0,
+        "University of Islamic Sciences, Karachi" to 1,
+        "Islamic Society of North America" to 2,
+        "Muslim World League" to 3,
+        "Umm Al-Qura University, Makkah" to 4,
+        "Egyptian General Authority of Survey" to 5
+    )
 
     Scaffold(
         topBar = {
@@ -121,6 +131,25 @@ fun SettingsScreen(
                     leadingContent = { Icon(Icons.Default.Translate, contentDescription = null) },
                     modifier = Modifier.clickable { showTranslationDialog = true }
                 )
+            }
+
+            item {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                Text(text = "Prayer Times", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            }
+
+            item {
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        SettingDropdown(
+                            label = "Calculation Method",
+                            icon = Icons.Default.Mosque,
+                            currentValue = calculationMethods.find { it.second == prayerCalculationMethod }?.first ?: "Islamic Society of North America",
+                            options = calculationMethods,
+                            onOptionSelected = { viewModel.setPrayerCalculationMethod(it) }
+                        )
+                    }
+                }
             }
 
             item {

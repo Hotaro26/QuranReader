@@ -25,6 +25,7 @@ class PreferenceManager @Inject constructor(private val context: Context) {
         val RAMADAN_MODE_ACTIVE = booleanPreferencesKey("ramadan_mode_active")
         val RAMADAN_REGION = stringPreferencesKey("ramadan_region")
         val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
+        val PRAYER_CALCULATION_METHOD = intPreferencesKey("prayer_calculation_method")
     }
 
     val lastReadSurah: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -65,6 +66,10 @@ class PreferenceManager @Inject constructor(private val context: Context) {
 
     val hasCompletedOnboarding: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] ?: false
+    }
+
+    val prayerCalculationMethod: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.PRAYER_CALCULATION_METHOD] ?: 2 // Default: 2 (ISNA)
     }
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
@@ -119,6 +124,12 @@ class PreferenceManager @Inject constructor(private val context: Context) {
     suspend fun saveHasCompletedOnboarding(completed: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.HAS_COMPLETED_ONBOARDING] = completed
+        }
+    }
+
+    suspend fun savePrayerCalculationMethod(method: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.PRAYER_CALCULATION_METHOD] = method
         }
     }
 

@@ -21,7 +21,31 @@ interface ExternalApiService {
         @Query("daily") daily: String = "temperature_2m_max,temperature_2m_min,weathercode",
         @Query("timezone") timezone: String = "auto"
     ): Response<WeatherResponse>
+
+    // AlAdhan API for Prayer Times
+    @GET("https://api.aladhan.com/v1/timings")
+    suspend fun getPrayerTimings(
+        @Query("latitude") lat: Double,
+        @Query("longitude") lon: Double,
+        @Query("method") method: Int = 2
+    ): Response<AlAdhanResponse>
 }
+
+data class AlAdhanResponse(
+    val data: AlAdhanData
+)
+
+data class AlAdhanData(
+    val timings: AlAdhanTimings
+)
+
+data class AlAdhanTimings(
+    val Fajr: String,
+    val Dhuhr: String,
+    val Asr: String,
+    val Maghrib: String,
+    val Isha: String
+)
 
 data class HolidayDto(
     val date: String,
