@@ -32,9 +32,11 @@ data class TrackerUiState(
     val ramadanModeActive: Boolean = false,
     val selectedRegion: String = "Middle East",
     val heatmapData: Map<Long, Int> = emptyMap(), // Date (millis) to count
-    val todoHistory: Map<String, List<Todo>> = emptyMap(), // Date string to list
     val holidays: List<HolidayDto> = emptyList(),
     val weather: WeatherDayDto? = null,
+    val day: String = "",
+    val month: String = "",
+    val year: String = "",
     val countryName: String? = null
 )
 
@@ -76,8 +78,10 @@ class TrackerViewModel @Inject constructor(
                 cal.timeInMillis
             }.mapValues { it.value.size }
 
-        val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-        val history = todos.groupBy { sdf.format(Date(it.timestamp)) }
+        val now = Date()
+        val daySdf = SimpleDateFormat("dd", Locale.getDefault())
+        val monthSdf = SimpleDateFormat("MMMM", Locale.getDefault())
+        val yearSdf = SimpleDateFormat("yyyy", Locale.getDefault())
 
         TrackerUiState(
             todos = todos.filter { !isSameDay(it.timestamp, System.currentTimeMillis()) || !it.isCompleted },
@@ -86,9 +90,11 @@ class TrackerViewModel @Inject constructor(
             ramadanModeActive = ramadanModeActive,
             selectedRegion = ramadanRegion,
             heatmapData = heatmap,
-            todoHistory = history,
             holidays = holidays,
             weather = weather,
+            day = daySdf.format(now),
+            month = monthSdf.format(now),
+            year = yearSdf.format(now),
             countryName = countryName
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), TrackerUiState())
@@ -154,6 +160,7 @@ class TrackerViewModel @Inject constructor(
                     WeatherDayDto(
                         max = it.daily.temperature_2m_max.firstOrNull() ?: 0.0,
                         min = it.daily.temperature_2m_min.firstOrNull() ?: 0.0,
+                        current = it.current_weather?.temperature,
                         code = it.daily.weathercode.firstOrNull() ?: 0
                     )
                 }

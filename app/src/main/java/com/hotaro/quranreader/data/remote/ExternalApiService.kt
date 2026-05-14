@@ -19,6 +19,7 @@ interface ExternalApiService {
         @Query("latitude") lat: Double,
         @Query("longitude") lon: Double,
         @Query("daily") daily: String = "temperature_2m_max,temperature_2m_min,weathercode",
+        @Query("current_weather") current_weather: Boolean = true,
         @Query("timezone") timezone: String = "auto"
     ): Response<WeatherResponse>
 
@@ -55,7 +56,15 @@ data class HolidayDto(
 )
 
 data class WeatherResponse(
-    val daily: WeatherDailyDto
+    val daily: WeatherDailyDto,
+    val current_weather: CurrentWeatherDto?
+)
+
+data class CurrentWeatherDto(
+    val temperature: Double,
+    val weathercode: Int,
+    val is_day: Int,
+    val time: String
 )
 
 data class WeatherDailyDto(

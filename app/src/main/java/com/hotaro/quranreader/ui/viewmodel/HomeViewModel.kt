@@ -29,6 +29,10 @@ data class HomeUiState(
     val lastReadAyah: Int = 1,
     val bookmarks: List<Bookmark> = emptyList(),
     val currentTime: String = "",
+    val day: String = "",
+    val month: String = "",
+    val year: String = "",
+    val weatherTemp: Double? = null,
     val prayerTimes: List<PrayerTime> = emptyList(),
     val cityName: String = ""
 )
@@ -44,6 +48,16 @@ class HomeViewModel @Inject constructor(
     private val _currentTime = MutableStateFlow("")
     private val _prayerTimes = MutableStateFlow<List<PrayerTime>>(emptyList())
     private val _cityName = MutableStateFlow("")
+    private val _weatherTemp = MutableStateFlow<Double?>(null)
+
+    private val _homeAnimationTrigger = MutableSharedFlow<Unit>(replay = 0)
+    val homeAnimationTrigger = _homeAnimationTrigger.asSharedFlow()
+
+    fun triggerHomeAnimation() {
+        viewModelScope.launch {
+            _homeAnimationTrigger.emit(Unit)
+        }
+    }
 
     init {
         updateTime()
@@ -88,10 +102,10 @@ class HomeViewModel @Inject constructor(
                 _cityName.value = city
 
                 val method = repository.prayerCalculationMethod.first()
-                val response = repository.getPrayerTimings(location.latitude, location.longitude, method)
+                val prayerResponse = repository.getPrayerTimings(location.latitude, location.longitude, method)
                 
-                if (response.isSuccessful) {
-                    response.body()?.data?.timings?.let { timings ->
+                if (prayerResponse.isSuccessful) {
+                    prayerResponse.body()?.data?.timings?.let { timings ->
                         val rawTimes = listOf(
                             "Fajr" to timings.Fajr,
                             "Dhuhr" to timings.Dhuhr,
@@ -103,8 +117,16 @@ class HomeViewModel @Inject constructor(
                         _prayerTimes.value = PrayerTimeProvider.formatPrayerTimes(rawTimes, use24Hour)
                     }
                 }
+
+                val weatherResponse = repository.getWeather(location.latitude, location.longitude)
+                if (weatherResponse.isSuccessful) {
+                    weatherResponse.body()?.current_weather?.temperature?.let { temp ->
+                        _weatherTemp.value = temp
+                    }
+                }
+
             } catch (e: Exception) {
-                Log.e("HomeViewModel", "Error getting prayer timings: ${e.message}")
+                Log.e("HomeViewModel", "Error getting data: ${e.message}")
             }
         }
     }
@@ -120,7 +142,8 @@ class HomeViewModel @Inject constructor(
         repository.use24HourFormat,
         _currentTime,
         _prayerTimes,
-        _cityName
+        _cityName,
+        _weatherTemp
     ) { args ->
         val surahNum = args[0] as Int
         val ayahNum = args[1] as Int
@@ -129,14 +152,21 @@ class HomeViewModel @Inject constructor(
         val currentTimeFlow = args[4] as String
         @Suppress("UNCHECKED_CAST") val apiPrayerTimes = args[5] as List<PrayerTime>
         val city = args[6] as String
+        val weather = args[7] as Double?
 
         val surah = repository.getSurahs().find { it.number == surahNum }
-        val sdf = if (use24Hour) {
+        
+        val now = Date()
+        val timeSdf = if (use24Hour) {
             SimpleDateFormat("HH:mm", Locale.getDefault())
         } else {
             SimpleDateFormat("hh:mm a", Locale.getDefault())
         }
-        val formattedTime = sdf.format(Date())
+        val formattedTime = timeSdf.format(now)
+
+        val daySdf = SimpleDateFormat("dd", Locale.getDefault())
+        val monthSdf = SimpleDateFormat("MMMM", Locale.getDefault())
+        val yearSdf = SimpleDateFormat("yyyy", Locale.getDefault())
 
         val finalPrayerTimes = if (apiPrayerTimes.isNotEmpty()) apiPrayerTimes else PrayerTimeProvider.getPrayerTimes(use24Hour)
 
@@ -145,6 +175,10 @@ class HomeViewModel @Inject constructor(
             lastReadAyah = ayahNum,
             bookmarks = bookmarks,
             currentTime = formattedTime,
+            day = daySdf.format(now),
+            month = monthSdf.format(now),
+            year = yearSdf.format(now),
+            weatherTemp = weather,
             prayerTimes = finalPrayerTimes,
             cityName = city
         )

@@ -7,6 +7,19 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.foundation.LocalIndication
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -44,10 +57,43 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val view = LocalView.current
+    
+    val homeRotation = remember { Animatable(0f) }
 
     LaunchedEffect(Unit) {
         viewModel.fetchLocation()
+        // Animate on first enter
+        homeRotation.animateTo(
+            targetValue = homeRotation.value + 360f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            )
+        )
     }
+
+    LaunchedEffect(viewModel.homeAnimationTrigger) {
+        viewModel.homeAnimationTrigger.collect {
+            homeRotation.animateTo(
+                targetValue = homeRotation.value + 360f,
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness = Spring.StiffnessLow
+                )
+            )
+        }
+    }
+
+    val fabInteractionSource = remember { MutableInteractionSource() }
+    val isFabPressed by fabInteractionSource.collectIsPressedAsState()
+    val fabScale by animateFloatAsState(
+        targetValue = if (isFabPressed) 1.1f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "fabScale"
+    )
 
     Scaffold(
         topBar = {
@@ -65,7 +111,9 @@ fun HomeScreen(
                     icon = { Icon(Icons.Default.PlayArrow, contentDescription = null) },
                     text = { Text("Continue") },
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    interactionSource = fabInteractionSource,
+                    modifier = Modifier.scale(fabScale)
                 )
             }
         }
@@ -84,8 +132,13 @@ fun HomeScreen(
                 item {
                     TimeAndPrayerCard(
                         currentTime = uiState.currentTime,
+                        day = uiState.day,
+                        month = uiState.month,
+                        year = uiState.year,
+                        weatherTemp = uiState.weatherTemp,
                         prayerTimes = uiState.prayerTimes,
-                        cityName = uiState.cityName
+                        cityName = uiState.cityName,
+                        iconRotation = homeRotation.value
                     )
                 }
 
@@ -96,7 +149,8 @@ fun HomeScreen(
                     ) {
                         QiblaCard(
                             modifier = Modifier.weight(1f).fillMaxHeight(),
-                            onClick = onQiblaClick
+                            onClick = onQiblaClick,
+                            iconRotation = homeRotation.value
                         )
                         LastReadCard(
                             surah = uiState.lastReadSurah,
@@ -159,8 +213,13 @@ fun HomeScreen(
 @Composable
 fun TimeAndPrayerCard(
     currentTime: String,
+    day: String,
+    month: String,
+    year: String,
+    weatherTemp: Double?,
     prayerTimes: List<PrayerTime>,
-    cityName: String
+    cityName: String,
+    iconRotation: Float = 0f
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -168,32 +227,112 @@ fun TimeAndPrayerCard(
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.Top
             ) {
-                Column {
-                    Text(text = if (cityName.isNotEmpty()) "Current Time in $cityName" else "Current Time", style = MaterialTheme.typography.labelMedium)
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = currentTime,
-                        style = MaterialTheme.typography.displayMedium,
-                        fontWeight = FontWeight.Bold
+                        text = if (cityName.isNotEmpty()) cityName else "Location", 
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
                     )
+                    
+                    AnimatedContent(
+                        targetState = currentTime,
+                        transitionSpec = {
+                            fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) togetherWith
+                            fadeOut(animationSpec = spring(stiffness = Spring.StiffnessLow))
+                        },
+                        label = "timeAnimation"
+                    ) { targetTime ->
+                        Text(
+                            text = targetTime,
+                            style = MaterialTheme.typography.displayMedium,
+                            fontWeight = FontWeight.Black
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.height(8.dp))
+                    
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(
+                            text = day,
+                            style = MaterialTheme.typography.displaySmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column {
+                            Text(
+                                text = month,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
+                            )
+                            Text(
+                                text = year,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
                 }
-                Icon(
-                    Icons.Default.Schedule,
-                    contentDescription = null,
-                    modifier = Modifier.size(48.dp),
-                    tint = MaterialTheme.colorScheme.primary
-                )
+
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Icon(
+                        Icons.Default.Schedule,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .rotate(iconRotation),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
+                    
+                    weatherTemp?.let { temp ->
+                        Column(horizontalAlignment = Alignment.End) {
+                            AnimatedContent(
+                                targetState = temp,
+                                transitionSpec = {
+                                    scaleIn(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)) togetherWith
+                                    scaleOut()
+                                },
+                                label = "tempAnimation"
+                            ) { targetTemp ->
+                                Text(
+                                    text = "${targetTemp.toInt()}°",
+                                    style = MaterialTheme.typography.displayMedium,
+                                    fontWeight = FontWeight.Black,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            }
+                            Text(
+                                text = "Current Temp",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
             }
             
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.1f))
             Spacer(modifier = Modifier.height(16.dp))
             
-            Text(text = "Prayer Times", style = MaterialTheme.typography.labelMedium)
-            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Prayer Times", 
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold
+            )
+            Spacer(modifier = Modifier.height(12.dp))
             
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -233,10 +372,25 @@ fun LastReadCard(
     onClick: () -> Unit
 ) {
     val view = LocalView.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 1.05f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "scale"
+    )
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable {
+            .scale(scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current
+            ) {
                 view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 onClick()
             },
@@ -312,13 +466,29 @@ fun BookmarkItem(
 @Composable
 fun QiblaCard(
     modifier: Modifier = Modifier,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    iconRotation: Float = 0f
 ) {
     val view = LocalView.current
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 1.05f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "scale"
+    )
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable {
+            .scale(scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = LocalIndication.current
+            ) {
                 view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
                 onClick()
             },
@@ -333,7 +503,9 @@ fun QiblaCard(
             Icon(
                 Icons.Default.Explore, 
                 contentDescription = null, 
-                modifier = Modifier.size(32.dp),
+                modifier = Modifier
+                    .size(32.dp)
+                    .rotate(iconRotation),
                 tint = MaterialTheme.colorScheme.onTertiaryContainer
             )
             Spacer(modifier = Modifier.width(16.dp))
@@ -353,3 +525,4 @@ fun QiblaCard(
         }
     }
 }
+

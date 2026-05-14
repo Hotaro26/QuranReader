@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalView
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -23,9 +24,14 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Mosque
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TaskAlt
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Mosque
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
@@ -48,6 +54,7 @@ import com.hotaro.quranreader.ui.screen.SurahListScreen
 import com.hotaro.quranreader.ui.screen.TrackerScreen
 import com.hotaro.quranreader.ui.theme.QuranReaderTheme
 import com.hotaro.quranreader.ui.viewmodel.OnboardingViewModel
+import com.hotaro.quranreader.ui.viewmodel.HomeViewModel
 import com.hotaro.quranreader.ui.viewmodel.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -57,10 +64,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
+            val homeViewModel: HomeViewModel = hiltViewModel()
             val themeMode by themeViewModel.themeMode.collectAsState(initial = 0)
-            val colorPalette by themeViewModel.colorPalette.collectAsState(initial = "classic")
+            val colorPalette by themeViewModel.colorPalette.collectAsState(initial = "dynamic")
             val appFont by themeViewModel.appFont.collectAsState(initial = "default")
-            
+
             QuranReaderTheme(
                 themeMode = themeMode,
                 paletteName = colorPalette,
@@ -70,17 +78,22 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    QuranApp()
+                    QuranApp(homeViewModel)
                 }
             }
         }
     }
 }
 
-data class BottomNavItem(val route: String, val label: String, val icon: ImageVector)
+data class NavigationItem(
+    val route: String,
+    val label: String,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector
+)
 
 @Composable
-fun QuranApp() {
+fun QuranApp(homeViewModel: HomeViewModel) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -107,13 +120,14 @@ fun QuranApp() {
     }
 
     val items = listOf(
-        BottomNavItem("home", "Home", Icons.Default.Home),
-        BottomNavItem("surahs", "Surahs", Icons.Default.Mosque),
-        BottomNavItem("tracker", "Tracker", Icons.Default.TaskAlt),
-        BottomNavItem("settings", "Settings", Icons.Default.Settings)
+        NavigationItem("home", "Home", Icons.Filled.Home, Icons.Outlined.Home),
+        NavigationItem("surahs", "Surahs", Icons.Filled.Mosque, Icons.Outlined.Mosque),
+        NavigationItem("tracker", "Tracker", Icons.Filled.TaskAlt, Icons.Outlined.TaskAlt),
+        NavigationItem("settings", "Settings", Icons.Filled.Settings, Icons.Outlined.Settings)
     )
 
     val showNavBar = currentDestination?.route in listOf("home", "surahs", "tracker", "settings")
+    var settingsRotationTarget by remember { mutableStateOf(0f) }
 
     Row(modifier = Modifier.fillMaxSize()) {
         if (isWideScreen && showNavBar) {
@@ -123,6 +137,7 @@ fun QuranApp() {
                 Spacer(Modifier.weight(1f))
                 items.forEach { item ->
                     val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+
                     val scale by animateFloatAsState(
                         targetValue = if (isSelected) 1.2f else 1f,
                         animationSpec = spring(
@@ -131,12 +146,36 @@ fun QuranApp() {
                         ),
                         label = "scale"
                     )
+
+                    val rotation by animateFloatAsState(
+                        targetValue = if (item.route == "settings") settingsRotationTarget else 0f,
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                            stiffness = Spring.StiffnessLow
+                        ),
+                        label = "rotation"
+                    )
+
                     NavigationRailItem(
-                        icon = { Icon(item.icon, contentDescription = item.label, modifier = Modifier.scale(scale)) },
+                        icon = { 
+                            Icon(
+                                imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                                contentDescription = item.label,
+                                modifier = Modifier
+                                    .scale(scale)
+                                    .rotate(rotation)
+                            )
+                        },
                         label = { Text(item.label) },
                         selected = isSelected,
                         onClick = {
                             view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                            if (item.route == "settings") {
+                                settingsRotationTarget += 360f
+                            }
+                            if (item.route == "home") {
+                                homeViewModel.triggerHomeAnimation()
+                            }
                             navController.navigate(item.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
@@ -161,6 +200,7 @@ fun QuranApp() {
                     ) {
                         items.forEach { item ->
                             val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
+
                             val scale by animateFloatAsState(
                                 targetValue = if (isSelected) 1.2f else 1f,
                                 animationSpec = spring(
@@ -169,12 +209,36 @@ fun QuranApp() {
                                 ),
                                 label = "scale"
                             )
+
+                            val rotation by animateFloatAsState(
+                                targetValue = if (item.route == "settings") settingsRotationTarget else 0f,
+                                animationSpec = spring(
+                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                    stiffness = Spring.StiffnessLow
+                                ),
+                                label = "rotation"
+                            )
+
                             NavigationBarItem(
-                                icon = { Icon(item.icon, contentDescription = item.label, modifier = Modifier.scale(scale)) },
+                                icon = { 
+                                    Icon(
+                                        imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                                        contentDescription = item.label,
+                                        modifier = Modifier
+                                            .scale(scale)
+                                            .rotate(rotation)
+                                    )
+                                },
                                 label = { Text(item.label) },
                                 selected = isSelected,
                                 onClick = {
                                     view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                    if (item.route == "settings") {
+                                        settingsRotationTarget += 360f
+                                    }
+                                    if (item.route == "home") {
+                                        homeViewModel.triggerHomeAnimation()
+                                    }
                                     navController.navigate(item.route) {
                                         popUpTo(navController.graph.findStartDestination().id) {
                                             saveState = true
@@ -192,9 +256,100 @@ fun QuranApp() {
             NavHost(
                 navController = navController,
                 startDestination = "home",
-                modifier = Modifier.padding(innerPadding)
-            ) {
-                composable("home") {
+                modifier = Modifier.padding(innerPadding),
+                enterTransition = {
+                    val tabs = listOf("home", "surahs", "tracker", "settings")
+                    val initialIndex = tabs.indexOf(initialState.destination.route)
+                    val targetIndex = tabs.indexOf(targetState.destination.route)
+
+                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                        slideInHorizontally(
+                            initialOffsetX = { if (targetIndex > initialIndex) it else -it },
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        )
+                    } else {
+                        slideInHorizontally(
+                            initialOffsetX = { it },
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        )
+                    }
+                },
+                exitTransition = {
+                    val tabs = listOf("home", "surahs", "tracker", "settings")
+                    val initialIndex = tabs.indexOf(initialState.destination.route)
+                    val targetIndex = tabs.indexOf(targetState.destination.route)
+
+                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                        slideOutHorizontally(
+                            targetOffsetX = { if (targetIndex > initialIndex) -it else it },
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        )
+                    } else {
+                        slideOutHorizontally(
+                            targetOffsetX = { -it },
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        )
+                    }
+                },
+                popEnterTransition = {
+                    val tabs = listOf("home", "surahs", "tracker", "settings")
+                    val initialIndex = tabs.indexOf(initialState.destination.route)
+                    val targetIndex = tabs.indexOf(targetState.destination.route)
+
+                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                        slideInHorizontally(
+                            initialOffsetX = { if (targetIndex > initialIndex) it else -it },
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        )
+                    } else {
+                        slideInHorizontally(
+                            initialOffsetX = { -it },
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        )
+                    }
+                },
+                popExitTransition = {
+                    val tabs = listOf("home", "surahs", "tracker", "settings")
+                    val initialIndex = tabs.indexOf(initialState.destination.route)
+                    val targetIndex = tabs.indexOf(targetState.destination.route)
+
+                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                        slideOutHorizontally(
+                            targetOffsetX = { if (targetIndex > initialIndex) -it else it },
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        )
+                    } else {
+                        slideOutHorizontally(
+                            targetOffsetX = { it },
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        )
+                    }
+                }
+            ) {                composable("home") {
                     HomeScreen(
                         onContinueClick = { surah, ayah ->
                             navController.navigate("reader/${surah.number}/${surah.englishName}?ayah=$ayah")

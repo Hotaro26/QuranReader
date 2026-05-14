@@ -154,6 +154,42 @@ fun SettingsScreen(
 
             item {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                Text(text = "Todo History", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+            }
+
+            item {
+                val todoHistory by viewModel.todoHistory.collectAsState()
+                if (todoHistory.isEmpty()) {
+                    Text("No history yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        todoHistory.forEach { (date, todos) ->
+                            Text(text = date, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))) {
+                                Column(modifier = Modifier.padding(8.dp)) {
+                                    todos.forEach { todo ->
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(todo.title, style = MaterialTheme.typography.bodyMedium)
+                                            Spacer(Modifier.weight(1f))
+                                            IconButton(onClick = { viewModel.deleteTodo(todo) }, modifier = Modifier.size(24.dp)) {
+                                                Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            item {
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
                 Text(text = "About", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             }
 

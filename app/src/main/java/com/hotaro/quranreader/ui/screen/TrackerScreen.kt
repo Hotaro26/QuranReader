@@ -61,16 +61,13 @@ fun TrackerScreen(
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        WeatherCard(
-                            weather = uiState.weather,
-                            modifier = Modifier.weight(1f)
-                        )
-                        DateCard(modifier = Modifier.weight(1f))
-                    }
+                    TrackerHeaderCard(
+                        weather = uiState.weather,
+                        day = uiState.day,
+                        month = uiState.month,
+                        year = uiState.year,
+                        countryName = uiState.countryName
+                    )
                 }
 
                 item {
@@ -107,18 +104,6 @@ fun TrackerScreen(
                             }
                         }
                     }
-                }
-
-                item {
-                    Text(
-                        text = "Monthly Productivity",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-
-                item {
-                    TodoHeatmap(heatmapData = uiState.heatmapData)
                 }
 
                 item {
@@ -168,45 +153,16 @@ fun TrackerScreen(
                     }
                 }
 
-                if (uiState.todoHistory.isNotEmpty()) {
-                    item {
-                        Text(
-                            text = "History",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            modifier = Modifier.padding(top = 16.dp)
-                        )
-                    }
+                item {
+                    Text(
+                        text = "Monthly Productivity",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
 
-                    uiState.todoHistory.forEach { (date, todos) ->
-                        item {
-                            Text(
-                                text = date,
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.padding(top = 8.dp)
-                            )
-                        }
-                        item {
-                            Card(
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.1f)
-                                )
-                            ) {
-                                Column(modifier = Modifier.padding(4.dp)) {
-                                    todos.forEach { todo ->
-                                        TodoItem(
-                                            todo = todo,
-                                            onToggle = { viewModel.toggleTodo(todo) },
-                                            onDelete = { viewModel.deleteTodo(todo) }
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                item {
+                    TodoHeatmap(heatmapData = uiState.heatmapData)
                 }
 
                 item { Spacer(modifier = Modifier.height(80.dp)) }
@@ -254,59 +210,86 @@ fun TrackerScreen(
 }
 
 @Composable
-fun WeatherCard(
+fun TrackerHeaderCard(
     weather: WeatherDayDto?,
-    modifier: Modifier = Modifier
+    day: String,
+    month: String,
+    year: String,
+    countryName: String?
 ) {
     Card(
-        modifier = modifier.height(140.dp),
+        modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
         )
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Cloud, null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.width(8.dp))
-                Text("Weather", style = MaterialTheme.typography.labelMedium)
-            }
-            Spacer(Modifier.weight(1f))
-            if (weather != null) {
+        Row(
+            modifier = Modifier
+                .padding(24.dp)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = "${((weather.max + weather.min) / 2).toInt()}°C",
-                    style = MaterialTheme.typography.headlineLarge,
-                    fontWeight = FontWeight.Bold
+                    text = countryName ?: "Location",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary
                 )
-            } else {
-                Text("Acquiring...", style = MaterialTheme.typography.bodyMedium)
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = day,
+                        style = MaterialTheme.typography.displayMedium,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = month,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Text(
+                            text = year,
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                        )
+                    }
+                }
             }
-        }
-    }
-}
 
-@Composable
-fun DateCard(
-    modifier: Modifier = Modifier
-) {
-    val date = SimpleDateFormat("dd MMMM, yyyy", Locale.getDefault()).format(Date())
-    Card(
-        modifier = modifier.height(140.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
-        )
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.CalendarToday, null, tint = MaterialTheme.colorScheme.secondary)
-                Spacer(Modifier.width(8.dp))
-                Text("Date", style = MaterialTheme.typography.labelMedium)
+            Column(horizontalAlignment = Alignment.End) {
+                Icon(
+                    Icons.Default.Cloud,
+                    contentDescription = null,
+                    modifier = Modifier.size(32.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                if (weather != null) {
+                    val temp = weather.current ?: ((weather.max + weather.min) / 2)
+                    Text(
+                        text = "${temp.toInt()}°",
+                        style = MaterialTheme.typography.displayLarge,
+                        fontWeight = FontWeight.Black,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Current Temp",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
+                    )
+                } else {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        strokeWidth = 2.dp,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
             }
-            Spacer(Modifier.weight(1f))
-            Text(
-                text = date,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
         }
     }
 }

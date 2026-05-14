@@ -3,10 +3,13 @@ package com.hotaro.quranreader.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hotaro.quranreader.data.model.Edition
+import com.hotaro.quranreader.data.model.Todo
 import com.hotaro.quranreader.data.repository.QuranRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
@@ -25,6 +28,12 @@ class SettingsViewModel @Inject constructor(
     val selectedTranslation = repository.selectedTranslation.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "eng-mustafakhattabg")
     val appFont = repository.appFont.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "default")
     val prayerCalculationMethod = repository.prayerCalculationMethod.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2)
+
+    val todoHistory = repository.getAllTodos().map { todos ->
+        val sdf = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+        todos.filter { it.isCompleted }
+            .groupBy { sdf.format(Date(it.timestamp)) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     val filteredEditions = combine(_editions, _searchQuery) { editions, query ->
         if (query.isBlank()) {
@@ -89,6 +98,18 @@ class SettingsViewModel @Inject constructor(
     fun setPrayerCalculationMethod(method: Int) {
         viewModelScope.launch {
             repository.savePrayerCalculationMethod(method)
+        }
+    }
+
+    fun toggleTodo(todo: Todo) {
+        viewModelScope.launch {
+            repository.updateTodo(todo.copy(isCompleted = !todo.isCompleted))
+        }
+    }
+
+    fun deleteTodo(todo: Todo) {
+        viewModelScope.launch {
+            repository.deleteTodo(todo)
         }
     }
 }
