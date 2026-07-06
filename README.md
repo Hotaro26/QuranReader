@@ -2,7 +2,7 @@
 
 Quran Reader is a modern, feature-rich Android application built with Jetpack Compose, designed to provide a seamless and beautiful experience for reading the Holy Quran. The app focuses on clean design, performance, and user customization.
 
-## 🌟 Features
+##  Features
 
 - **Modern UI:** Built entirely with Jetpack Compose for a smooth and responsive interface.
 - **Home Dashboard:** Quick access to your last read position, recent bookmarks, and current prayer times.
@@ -48,7 +48,7 @@ Quran Reader is a modern, feature-rich Android application built with Jetpack Co
   </tr>
 </table>
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 - **Language:** [Kotlin](https://kotlinlang.org/)
 - **UI Framework:** [Jetpack Compose](https://developer.android.com/jetpack/compose)
@@ -59,20 +59,20 @@ Quran Reader is a modern, feature-rich Android application built with Jetpack Co
 - **Architecture:** MVVM (Model-View-ViewModel) with a Repository pattern.
 - **Asynchronous Programming:** [Kotlin Coroutines](https://kotlinlang.org/docs/coroutines-overview.html) & [Flow](https://kotlinlang.org/docs/flow.html)
 
-## 📡 API Source
+##  API Source
 
 The application uses the **[Quran API](https://github.com/fawazahmed0/quran-api)** by Fawaz Ahmed.
 - **Base URL:** `https://raw.githubusercontent.com/fawazahmed0/quran-api/1/`
 - This API provides access to the Quran text in various languages and editions without requiring an API key.
 
-## 🏗️ Architecture Overview
+##  Architecture Overview
 
 The project follows the standard Android Architecture Guidelines:
 - **Data Layer:** Handles API calls (Retrofit) and local database operations (Room/DataStore).
 - **Domain Layer:** (Implicitly managed via Repositories) contains the business logic and models.
 - **UI Layer:** Composable screens and ViewModels that manage state using `StateFlow`.
 
-## 🚀 Building the Project
+##  Building the Project
 
 1. Clone the repository:
    ```bash
@@ -84,7 +84,7 @@ The project follows the standard Android Architecture Guidelines:
    ./gradlew assembleDebug
    ```
 
-## 📄 License
+##  License
 
 This project is open-source. Please attribute the API source (Fawaz Ahmed's Quran API) when using or forking.
 
