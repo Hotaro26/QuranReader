@@ -88,5 +88,13 @@ The project follows the standard Android Architecture Guidelines:
 
 This project is open-source. Please attribute the API source (Fawaz Ahmed's Quran API) when using or forking.
 
----
-Developed with ❤️ by [Hotaro](https://github.com/Hotaro26)
+## Star History
+
+<a href="https://www.star-history.com/?repos=Hotaro26%2FQuranReader&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Hotaro26/QuranReader&type=date&theme=dark&legend=top-left&sealed_token=ncsBU__uYZU5ovIxLuTo5GxpgJa402eUOsrlozYYM0s0JNxc1W06-H14x3jkd4P8G95i9SRwcogvE0PhyQ27Mnc_b7yiwNOgkixcCVhXTDGGs3dgxbFmP2RUvdDDlJQkMzBhSznif0x1FdJx9nQQs3EJyEvYPVzn44IwKyy_EeB27LCnaBBZPPI_ANib" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Hotaro26/QuranReader&type=date&legend=top-left&sealed_token=ncsBU__uYZU5ovIxLuTo5GxpgJa402eUOsrlozYYM0s0JNxc1W06-H14x3jkd4P8G95i9SRwcogvE0PhyQ27Mnc_b7yiwNOgkixcCVhXTDGGs3dgxbFmP2RUvdDDlJQkMzBhSznif0x1FdJx9nQQs3EJyEvYPVzn44IwKyy_EeB27LCnaBBZPPI_ANib" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Hotaro26/QuranReader&type=date&legend=top-left&sealed_token=ncsBU__uYZU5ovIxLuTo5GxpgJa402eUOsrlozYYM0s0JNxc1W06-H14x3jkd4P8G95i9SRwcogvE0PhyQ27Mnc_b7yiwNOgkixcCVhXTDGGs3dgxbFmP2RUvdDDlJQkMzBhSznif0x1FdJx9nQQs3EJyEvYPVzn44IwKyy_EeB27LCnaBBZPPI_ANib" />
+ </picture>
+</a>
+
