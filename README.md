@@ -90,11 +90,10 @@ This project is open-source. Please attribute the API source (Fawaz Ahmed's Qura
 
 ## Star History
 
-<a href="https://www.star-history.com/?repos=Hotaro26%2FQuranReader&type=date&legend=top-left">
+<a href="https://www.star-history.com/?repos=Hotaro26%2FQuranReader&type=timeline&legend=top-left">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Hotaro26/QuranReader&type=date&theme=dark&legend=top-left&sealed_token=ncsBU__uYZU5ovIxLuTo5GxpgJa402eUOsrlozYYM0s0JNxc1W06-H14x3jkd4P8G95i9SRwcogvE0PhyQ27Mnc_b7yiwNOgkixcCVhXTDGGs3dgxbFmP2RUvdDDlJQkMzBhSznif0x1FdJx9nQQs3EJyEvYPVzn44IwKyy_EeB27LCnaBBZPPI_ANib" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Hotaro26/QuranReader&type=date&legend=top-left&sealed_token=ncsBU__uYZU5ovIxLuTo5GxpgJa402eUOsrlozYYM0s0JNxc1W06-H14x3jkd4P8G95i9SRwcogvE0PhyQ27Mnc_b7yiwNOgkixcCVhXTDGGs3dgxbFmP2RUvdDDlJQkMzBhSznif0x1FdJx9nQQs3EJyEvYPVzn44IwKyy_EeB27LCnaBBZPPI_ANib" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Hotaro26/QuranReader&type=date&legend=top-left&sealed_token=ncsBU__uYZU5ovIxLuTo5GxpgJa402eUOsrlozYYM0s0JNxc1W06-H14x3jkd4P8G95i9SRwcogvE0PhyQ27Mnc_b7yiwNOgkixcCVhXTDGGs3dgxbFmP2RUvdDDlJQkMzBhSznif0x1FdJx9nQQs3EJyEvYPVzn44IwKyy_EeB27LCnaBBZPPI_ANib" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=Hotaro26/QuranReader&type=timeline&theme=dark&legend=top-left&sealed_token=VwcmJAjXTP7ISlVMdvz30JoTFXDFBrcGxobtwBEuZ0TExY_Vu_5ZwGe17o4bnmKCZCcleSBZrD-qIxTDRgX9XNmIikg4pazlh4XFUo6Wcm0PWkdANBTUlDkbuTnGHaq55Wr3K0pSy4EV62Y3tpXHP6Q33E4DI_qoEWVRQaoEm6OEf6eeESVzVyfvJULp" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=Hotaro26/QuranReader&type=timeline&legend=top-left&sealed_token=VwcmJAjXTP7ISlVMdvz30JoTFXDFBrcGxobtwBEuZ0TExY_Vu_5ZwGe17o4bnmKCZCcleSBZrD-qIxTDRgX9XNmIikg4pazlh4XFUo6Wcm0PWkdANBTUlDkbuTnGHaq55Wr3K0pSy4EV62Y3tpXHP6Q33E4DI_qoEWVRQaoEm6OEf6eeESVzVyfvJULp" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=Hotaro26/QuranReader&type=timeline&legend=top-left&sealed_token=VwcmJAjXTP7ISlVMdvz30JoTFXDFBrcGxobtwBEuZ0TExY_Vu_5ZwGe17o4bnmKCZCcleSBZrD-qIxTDRgX9XNmIikg4pazlh4XFUo6Wcm0PWkdANBTUlDkbuTnGHaq55Wr3K0pSy4EV62Y3tpXHP6Q33E4DI_qoEWVRQaoEm6OEf6eeESVzVyfvJULp" />
  </picture>
 </a>
-
