@@ -7,11 +7,11 @@ plugins {
 }
 
 android {
-    namespace = "com.hotaro.quranreader"
+    namespace = "com.hotaro.mizan"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.hotaro.quranreader"
+        applicationId = "com.hotaro.mizan"
         minSdk = 30
         targetSdk = 36
         versionCode = 4
