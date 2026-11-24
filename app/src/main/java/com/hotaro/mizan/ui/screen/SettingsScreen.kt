@@ -123,7 +123,7 @@ fun SettingsScreen(
                 modifier = Modifier
                     .widthIn(max = 840.dp)
                     .fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = navBarPadding + 16.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = navBarPadding + 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Support Hero Card
