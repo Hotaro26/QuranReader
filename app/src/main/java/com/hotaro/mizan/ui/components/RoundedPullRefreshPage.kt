@@ -4,7 +4,6 @@ import android.view.HapticFeedbackConstants
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -16,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Dp
@@ -37,14 +37,14 @@ fun RoundedPullRefreshPage(
     val state = rememberPullToRefreshState()
     val view = LocalView.current
     val density = LocalDensity.current
-    val isDark = isSystemInDarkTheme()
+    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
 
     val actualContainerColor = if (containerColor != Color.Unspecified) {
         containerColor
     } else if (isDark) {
         Color(0xFF090A0C)
     } else {
-        MaterialTheme.colorScheme.surfaceContainerLowest
+        MaterialTheme.colorScheme.surfaceContainerHigh
     }
 
     val actualPageColor = if (pageColor != Color.Unspecified) {

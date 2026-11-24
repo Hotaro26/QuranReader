@@ -46,7 +46,7 @@ class PreferenceManager @Inject constructor(private val context: Context) {
     }
 
     val colorPalette: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[PreferencesKeys.COLOR_PALETTE] ?: "default"
+        preferences[PreferencesKeys.COLOR_PALETTE] ?: "dynamic"
     }
 
     val appFont: Flow<String> = context.dataStore.data.map { preferences ->

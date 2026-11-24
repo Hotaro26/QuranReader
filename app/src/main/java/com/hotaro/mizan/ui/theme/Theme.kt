@@ -7,7 +7,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
@@ -29,9 +28,9 @@ private val LightColors = lightColorScheme(
     errorContainer = md_theme_light_errorContainer,
     onError = md_theme_light_onError,
     onErrorContainer = md_theme_light_onErrorContainer,
-    background = Color.White,
+    background = Color(0xFFFBFDF9),
     onBackground = md_theme_light_onBackground,
-    surface = Color.White,
+    surface = Color(0xFFFFFFFF),
     onSurface = md_theme_light_onSurface,
     surfaceVariant = md_theme_light_surfaceVariant,
     onSurfaceVariant = md_theme_light_onSurfaceVariant,
@@ -42,6 +41,11 @@ private val LightColors = lightColorScheme(
     surfaceTint = md_theme_light_surfaceTint,
     outlineVariant = md_theme_light_outlineVariant,
     scrim = md_theme_light_scrim,
+    surfaceContainerLowest = Color(0xFFFFFFFF),
+    surfaceContainerLow = Color(0xFFF3F5F2),
+    surfaceContainer = Color(0xFFECEFEA),
+    surfaceContainerHigh = Color(0xFFE6EAE4),
+    surfaceContainerHighest = Color(0xFFE0E4DE)
 )
 
 private val DarkColors = darkColorScheme(
@@ -74,6 +78,11 @@ private val DarkColors = darkColorScheme(
     surfaceTint = md_theme_dark_surfaceTint,
     outlineVariant = md_theme_dark_outlineVariant,
     scrim = md_theme_dark_scrim,
+    surfaceContainerLowest = Color(0xFF0C0D0E),
+    surfaceContainerLow = Color(0xFF141517),
+    surfaceContainer = Color(0xFF1A1B1E),
+    surfaceContainerHigh = Color(0xFF222427),
+    surfaceContainerHighest = Color(0xFF2B2D31)
 )
 
 fun getPalette(darkTheme: Boolean, paletteName: String): ColorScheme {
@@ -123,24 +132,21 @@ fun MizanTheme(
 
     val context = LocalContext.current
     val colorScheme = when {
-        paletteName == "dynamic" && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+        (paletteName == "dynamic" || paletteName == "default") && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val dynamic = if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
             if (darkTheme) {
-                dynamic.copy(background = Color.Black, surface = Color.Black, surfaceContainer = Color.Black)
+                dynamic.copy(background = Color.Black, surface = Color.Black, surfaceContainer = Color(0xFF141518))
             } else {
-                dynamic.copy(background = Color.White, surface = Color.White, surfaceContainer = Color.White)
+                dynamic
             }
         }
-        else -> getPalette(darkTheme, paletteName)
+        else -> getPalette(darkTheme, if (paletteName == "default") "dynamic" else paletteName)
     }
     
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            window.navigationBarColor = colorScheme.background.toArgb()
-            
             val controller = WindowCompat.getInsetsController(window, view)
             controller.isAppearanceLightStatusBars = !darkTheme
             controller.isAppearanceLightNavigationBars = !darkTheme
