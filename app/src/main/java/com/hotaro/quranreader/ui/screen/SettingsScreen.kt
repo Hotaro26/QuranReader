@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hotaro.quranreader.LocalFloatingNavBarPadding
 import com.hotaro.quranreader.data.model.Edition
+import com.hotaro.quranreader.ui.components.RoundedPullRefreshPage
 import com.hotaro.quranreader.ui.viewmodel.SettingsViewModel
 
 // AttendX-inspired card corner grouping shapes
@@ -62,6 +63,7 @@ fun SettingsScreen(
     val prayerCalculationMethod by viewModel.prayerCalculationMethod.collectAsState()
     val editions by viewModel.filteredEditions.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val navBarPadding = LocalFloatingNavBarPadding.current
 
     var showTranslationSheet by remember { mutableStateOf(false) }
@@ -84,7 +86,9 @@ fun SettingsScreen(
     val currentMethodLabel = calculationMethods.find { it.second == prayerCalculationMethod }?.first
         ?: "Islamic Society of North America"
 
-    Scaffold(
+    RoundedPullRefreshPage(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.refresh() },
         topBar = {
             TopAppBar(
                 title = { 
@@ -96,20 +100,20 @@ fun SettingsScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    scrolledContainerColor = Color.Transparent
                 )
             )
         }
     ) { innerPadding ->
         Box(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopCenter
         ) {
             LazyColumn(
                 modifier = Modifier
                     .widthIn(max = 840.dp)
                     .fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = navBarPadding + 16.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = navBarPadding + 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 // Support Hero Card

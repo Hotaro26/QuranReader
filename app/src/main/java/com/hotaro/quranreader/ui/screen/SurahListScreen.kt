@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hotaro.quranreader.LocalFloatingNavBarPadding
 import com.hotaro.quranreader.data.model.Surah
+import com.hotaro.quranreader.ui.components.RoundedPullRefreshPage
 import com.hotaro.quranreader.ui.viewmodel.SurahListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,11 +35,12 @@ fun SurahListScreen(
     viewModel: SurahListViewModel = hiltViewModel()
 ) {
     val surahs by viewModel.surahs.collectAsState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val navBarPadding = LocalFloatingNavBarPadding.current
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+    RoundedPullRefreshPage(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.refresh() },
         topBar = {
             TopAppBar(
                 title = { 
@@ -48,20 +50,17 @@ fun SurahListScreen(
                         fontWeight = FontWeight.Black
                     ) 
                 },
-                scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    scrolledContainerColor = Color.Transparent
                 )
             )
         }
     ) { innerPadding ->
         LazyVerticalGrid(
             columns = GridCells.Adaptive(minSize = 320.dp),
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = navBarPadding + 16.dp),
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = navBarPadding + 16.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {

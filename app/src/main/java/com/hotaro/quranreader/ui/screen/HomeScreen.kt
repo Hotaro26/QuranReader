@@ -45,6 +45,7 @@ import com.hotaro.quranreader.LocalFloatingNavBarPadding
 import com.hotaro.quranreader.data.model.Bookmark
 import com.hotaro.quranreader.data.model.PrayerTime
 import com.hotaro.quranreader.data.model.Surah
+import com.hotaro.quranreader.ui.components.RoundedPullRefreshPage
 import com.hotaro.quranreader.ui.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +57,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val view = LocalView.current
     val navBarPadding = LocalFloatingNavBarPadding.current
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -101,7 +103,9 @@ fun HomeScreen(
         label = "fabScale"
     )
 
-    Scaffold(
+    RoundedPullRefreshPage(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.refreshData() },
         topBar = {
             TopAppBar(
                 title = {
@@ -113,7 +117,7 @@ fun HomeScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    scrolledContainerColor = Color.Transparent
                 )
             )
         },
@@ -139,9 +143,7 @@ fun HomeScreen(
         }
     ) { innerPadding ->
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier = Modifier.fillMaxSize(),
             contentAlignment = Alignment.TopCenter
         ) {
             LazyColumn(
@@ -149,7 +151,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .widthIn(max = 840.dp)
                     .fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = navBarPadding + 16.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = navBarPadding + 16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {

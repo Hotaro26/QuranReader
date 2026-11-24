@@ -33,6 +33,10 @@ class ReaderViewModel @Inject constructor(
     
     val bookmarks = repository.getAllBookmarks().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    fun refresh() {
+        _currentSurah.value?.let { loadSurah(it) }
+    }
+
     fun loadSurah(surahNumber: Int) {
         _currentSurah.value = surahNumber
         viewModelScope.launch {

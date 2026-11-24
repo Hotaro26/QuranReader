@@ -20,6 +20,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.hotaro.quranreader.ui.components.RoundedPullRefreshPage
 import com.hotaro.quranreader.ui.viewmodel.AyahUiModel
 import com.hotaro.quranreader.ui.viewmodel.ReaderViewModel
 
@@ -47,7 +49,6 @@ fun ReaderScreen(
 
     val navBarPadding = com.hotaro.quranreader.LocalFloatingNavBarPadding.current
     val listState = rememberLazyListState()
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     LaunchedEffect(surahNumber) {
         viewModel.loadSurah(surahNumber)
@@ -72,8 +73,9 @@ fun ReaderScreen(
         }
     }
 
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+    RoundedPullRefreshPage(
+        isRefreshing = isLoading,
+        onRefresh = { viewModel.refresh() },
         topBar = {
             TopAppBar(
                 title = { 
@@ -118,10 +120,9 @@ fun ReaderScreen(
                         }
                     }
                 },
-                scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = androidx.compose.ui.graphics.Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    scrolledContainerColor = Color.Transparent
                 )
             )
         }
@@ -132,7 +133,7 @@ fun ReaderScreen(
             }
         } else {
             Box(
-                modifier = Modifier.fillMaxSize().padding(innerPadding),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.TopCenter
             ) {
                 LazyColumn(
@@ -140,7 +141,7 @@ fun ReaderScreen(
                     modifier = Modifier
                         .widthIn(max = 840.dp)
                         .fillMaxSize(),
-                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = navBarPadding + 24.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = navBarPadding + 24.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     items(ayahs) { ayah ->

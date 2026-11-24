@@ -50,12 +50,28 @@ class HomeViewModel @Inject constructor(
     private val _cityName = MutableStateFlow("")
     private val _weatherTemp = MutableStateFlow<Double?>(null)
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
     private val _homeAnimationTrigger = MutableSharedFlow<Unit>(replay = 0)
     val homeAnimationTrigger = _homeAnimationTrigger.asSharedFlow()
 
     fun triggerHomeAnimation() {
         viewModelScope.launch {
             _homeAnimationTrigger.emit(Unit)
+        }
+    }
+
+    fun refreshData() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            try {
+                fetchLocation()
+                triggerHomeAnimation()
+                delay(1000)
+            } finally {
+                _isRefreshing.value = false
+            }
         }
     }
 

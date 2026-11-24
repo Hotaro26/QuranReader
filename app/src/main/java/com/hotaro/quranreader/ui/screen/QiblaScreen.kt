@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.hotaro.quranreader.ui.components.RoundedPullRefreshPage
 import com.hotaro.quranreader.ui.viewmodel.QiblaViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,6 +34,7 @@ fun QiblaScreen(
     val compassHeading by viewModel.compassHeading.collectAsState()
     val qiblaDirection by viewModel.qiblaDirection.collectAsState()
     val hasLocation by viewModel.hasLocation.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
 
     val context = LocalContext.current
     var hasPermission by remember {
@@ -62,7 +64,9 @@ fun QiblaScreen(
         }
     }
 
-    Scaffold(
+    RoundedPullRefreshPage(
+        isRefreshing = isRefreshing,
+        onRefresh = { viewModel.refresh() },
         topBar = {
             TopAppBar(
                 title = { Text("Qibla Finder", fontWeight = FontWeight.Bold) },
@@ -86,15 +90,14 @@ fun QiblaScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                    scrolledContainerColor = Color.Transparent
                 )
             )
         }
     ) { innerPadding ->
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+                .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             if (!hasPermission) {

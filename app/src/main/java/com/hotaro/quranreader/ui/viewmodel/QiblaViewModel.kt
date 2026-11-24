@@ -11,10 +11,12 @@ import android.location.LocationListener
 import android.location.LocationManager
 import android.os.Bundle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
@@ -33,6 +35,18 @@ class QiblaViewModel @Inject constructor(
 
     private val _hasLocation = MutableStateFlow(false)
     val hasLocation = _hasLocation.asStateFlow()
+
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            fetchLocation()
+            kotlinx.coroutines.delay(800)
+            _isRefreshing.value = false
+        }
+    }
     
     private val kaabaLat = 21.422487
     val kaabaLon = 39.826206

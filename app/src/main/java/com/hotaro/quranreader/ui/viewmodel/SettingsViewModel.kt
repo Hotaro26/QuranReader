@@ -19,6 +19,17 @@ class SettingsViewModel @Inject constructor(
 
     private val _editions = MutableStateFlow<List<Edition>>(emptyList())
     
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing = _isRefreshing.asStateFlow()
+
+    fun refresh() {
+        viewModelScope.launch {
+            _isRefreshing.value = true
+            kotlinx.coroutines.delay(800)
+            _isRefreshing.value = false
+        }
+    }
+    
     private val _searchQuery = MutableStateFlow("")
     val searchQuery = _searchQuery.asStateFlow()
 
