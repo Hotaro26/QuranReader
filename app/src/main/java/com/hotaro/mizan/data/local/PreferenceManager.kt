@@ -32,6 +32,7 @@ class PreferenceManager @Inject constructor(private val context: Context) {
         val MANUAL_ASR = stringPreferencesKey("manual_asr")
         val MANUAL_MAGHRIB = stringPreferencesKey("manual_maghrib")
         val MANUAL_ISHA = stringPreferencesKey("manual_isha")
+        val SELECTED_APP_ICON = stringPreferencesKey("selected_app_icon")
     }
 
     val lastReadSurah: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -100,6 +101,10 @@ class PreferenceManager @Inject constructor(private val context: Context) {
 
     val manualIsha: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[PreferencesKeys.MANUAL_ISHA] ?: "20:00"
+    }
+
+    val selectedAppIcon: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.SELECTED_APP_ICON] ?: "emerald"
     }
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
@@ -178,6 +183,12 @@ class PreferenceManager @Inject constructor(private val context: Context) {
                 "maghrib" -> preferences[PreferencesKeys.MANUAL_MAGHRIB] = time
                 "isha" -> preferences[PreferencesKeys.MANUAL_ISHA] = time
             }
+        }
+    }
+
+    suspend fun saveSelectedAppIcon(icon: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.SELECTED_APP_ICON] = icon
         }
     }
 

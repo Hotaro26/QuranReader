@@ -9,6 +9,7 @@ import android.net.Uri
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -26,6 +27,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -81,6 +83,7 @@ fun SettingsScreen(
     val manualAsr by viewModel.manualAsr.collectAsState()
     val manualMaghrib by viewModel.manualMaghrib.collectAsState()
     val manualIsha by viewModel.manualIsha.collectAsState()
+    val selectedAppIcon by viewModel.selectedAppIcon.collectAsState()
     val editions by viewModel.filteredEditions.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -89,6 +92,7 @@ fun SettingsScreen(
     var showTranslationSheet by remember { mutableStateOf(false) }
     var showCalculationSheet by remember { mutableStateOf(false) }
     var showManualTimesSheet by remember { mutableStateOf(false) }
+    var showAppIconSheet by remember { mutableStateOf(false) }
     var showSupportSheet by remember { mutableStateOf(false) }
     var showSupportDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -158,7 +162,7 @@ fun SettingsScreen(
                         subtitle = "Select app appearance",
                         currentValue = themes.find { it.second == themeMode }?.first ?: "System",
                         options = themes,
-                        shape = SettingsGroupShape.getShape(0, 5),
+                        shape = SettingsGroupShape.getShape(0, 6),
                         onSelected = { viewModel.setThemeMode(it) }
                     )
                 }
@@ -178,8 +182,23 @@ fun SettingsScreen(
                         subtitle = "Personalize colors across the UI",
                         currentValue = palettes.find { it.second == colorPalette }?.first ?: "Material You",
                         options = palettes,
-                        shape = SettingsGroupShape.getShape(1, 5),
+                        shape = SettingsGroupShape.getShape(1, 6),
                         onSelected = { viewModel.setColorPalette(it) }
+                    )
+                }
+                item {
+                    val appIcons = listOf(
+                        "emerald" to "Emerald Green",
+                        "midnight" to "Midnight Blue",
+                        "purple" to "Royal Purple"
+                    )
+                    val currentIconName = appIcons.find { it.first == selectedAppIcon }?.second ?: "Emerald Green"
+                    ExpressiveActionSettingItem(
+                        icon = Icons.Default.AppShortcut,
+                        title = "App Icon",
+                        subtitle = currentIconName,
+                        shape = SettingsGroupShape.getShape(2, 6),
+                        onClick = { showAppIconSheet = true }
                     )
                 }
                 item {
@@ -200,7 +219,7 @@ fun SettingsScreen(
                         subtitle = "Choose reading & UI font",
                         currentValue = fonts.find { it.second == appFont }?.first ?: "Default",
                         options = fonts,
-                        shape = SettingsGroupShape.getShape(2, 5),
+                        shape = SettingsGroupShape.getShape(3, 6),
                         onSelected = { viewModel.setAppFont(it) }
                     )
                 }
@@ -211,7 +230,7 @@ fun SettingsScreen(
                         subtitle = "Display style for prayer times",
                         currentValue = if (use24HourFormat) "24-hour" else "12-hour",
                         options = listOf("12-hour" to false, "24-hour" to true),
-                        shape = SettingsGroupShape.getShape(3, 5),
+                        shape = SettingsGroupShape.getShape(4, 6),
                         onSelected = { viewModel.setUse24HourFormat(it) }
                     )
                 }
@@ -220,7 +239,7 @@ fun SettingsScreen(
                         icon = Icons.Default.Tune,
                         title = "Elements & Feel",
                         subtitle = "Customize homepage pills, layout & behavior",
-                        shape = SettingsGroupShape.getShape(4, 5),
+                        shape = SettingsGroupShape.getShape(5, 6),
                         onClick = onElementsAndFeelClick
                     )
                 }
@@ -616,6 +635,110 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+
+    if (showAppIconSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showAppIconSheet = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "App Icon",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = "Select your home screen launcher style",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                val iconOptions = listOf(
+                    Triple("emerald", "Emerald Green", Pair("Classic Islamic Mizan", R.drawable.preview_icon_emerald)),
+                    Triple("midnight", "Midnight Blue", Pair("Deep Celestial Night", R.drawable.preview_icon_midnight)),
+                    Triple("purple", "Royal Purple", Pair("Twilight Amethyst", R.drawable.preview_icon_purple))
+                )
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
+                    items(iconOptions) { (key, title, details) ->
+                        val (desc, drawableRes) = details
+                        val isSelected = key == selectedAppIcon
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.setAppIcon(context, key)
+                                    showAppIconSheet = false
+                                },
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer
+                            ),
+                            elevation = CardDefaults.cardElevation(0.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Image(
+                                    painter = painterResource(drawableRes),
+                                    contentDescription = title,
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(CircleShape)
+                                )
+                                Spacer(Modifier.width(16.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
+                                    )
+                                    Text(
+                                        text = desc,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f) else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (isSelected) {
+                                    Surface(
+                                        shape = CircleShape,
+                                        color = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(28.dp)
+                                    ) {
+                                        Box(contentAlignment = Alignment.Center) {
+                                            Icon(
+                                                Icons.Default.Check,
+                                                contentDescription = "Selected",
+                                                tint = MaterialTheme.colorScheme.onPrimary,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

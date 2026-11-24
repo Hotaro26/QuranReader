@@ -1,10 +1,12 @@
 package com.hotaro.mizan.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hotaro.mizan.data.model.Edition
 import com.hotaro.mizan.data.model.Todo
 import com.hotaro.mizan.data.repository.QuranRepository
+import com.hotaro.mizan.util.AppIconManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -45,6 +47,14 @@ class SettingsViewModel @Inject constructor(
     val manualAsr = repository.manualAsr.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "15:45")
     val manualMaghrib = repository.manualMaghrib.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "18:30")
     val manualIsha = repository.manualIsha.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "20:00")
+    val selectedAppIcon = repository.selectedAppIcon.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "emerald")
+
+    fun setAppIcon(context: Context, icon: String) {
+        viewModelScope.launch {
+            repository.saveSelectedAppIcon(icon)
+            AppIconManager.setAppIcon(context, icon)
+        }
+    }
 
     fun saveManualPrayerTime(prayer: String, time: String) {
         viewModelScope.launch {
