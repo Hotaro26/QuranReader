@@ -174,6 +174,8 @@ fun SettingsScreen(
                     val palettes = listOf(
                         "Material You" to "dynamic",
                         "Classic Green" to "classic",
+                        "Cherry Red" to "cherry",
+                        "Navy Blue" to "navy",
                         "Lavender" to "lavender",
                         "Pink" to "pink",
                         "Mocha" to "mocha",
