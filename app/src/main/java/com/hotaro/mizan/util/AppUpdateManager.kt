@@ -30,15 +30,18 @@ object AppUpdateManager {
 
     private const val TAG = "AppUpdateManager"
 
+    private fun extractVersionNumbers(raw: String): List<Int> {
+        val clean = raw.trim().removePrefix("v").removePrefix("V")
+        val match = Regex("""\d+(\.\d+)*""").find(clean)?.value ?: clean
+        return match.split(".").mapNotNull { it.toIntOrNull() }
+    }
+
     fun isNewerVersion(currentVersion: String, remoteTag: String): Boolean {
         try {
-            val cleanCurrent = currentVersion.trim().removePrefix("v").removePrefix("V")
-            val cleanRemote = remoteTag.trim().removePrefix("v").removePrefix("V")
+            val currentParts = extractVersionNumbers(currentVersion)
+            val remoteParts = extractVersionNumbers(remoteTag)
 
-            if (cleanCurrent.equals(cleanRemote, ignoreCase = true)) return false
-
-            val currentParts = cleanCurrent.split(".", "-").mapNotNull { it.toIntOrNull() }
-            val remoteParts = cleanRemote.split(".", "-").mapNotNull { it.toIntOrNull() }
+            if (currentParts.isEmpty() || remoteParts.isEmpty()) return false
 
             val maxLen = maxOf(currentParts.size, remoteParts.size)
             for (i in 0 until maxLen) {
@@ -51,6 +54,19 @@ object AppUpdateManager {
             Log.e(TAG, "Error comparing versions $currentVersion vs $remoteTag: ${e.message}")
         }
         return false
+    }
+
+    fun isSameVersion(v1: String, v2: String): Boolean {
+        val p1 = extractVersionNumbers(v1)
+        val p2 = extractVersionNumbers(v2)
+        if (p1.isEmpty() || p2.isEmpty()) return false
+        val maxLen = maxOf(p1.size, p2.size)
+        for (i in 0 until maxLen) {
+            val n1 = p1.getOrElse(i) { 0 }
+            val n2 = p2.getOrElse(i) { 0 }
+            if (n1 != n2) return false
+        }
+        return true
     }
 
     suspend fun downloadApk(

@@ -26,10 +26,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.hotaro.mizan.BuildConfig
 import com.hotaro.mizan.LocalFloatingNavBarPadding
 import com.hotaro.mizan.data.model.ReleaseNote
 import com.hotaro.mizan.ui.components.RoundedPullRefreshPage
 import com.hotaro.mizan.ui.viewmodel.SettingsViewModel
+import com.hotaro.mizan.util.AppUpdateManager
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -56,7 +58,9 @@ fun ChangelogScreen(
             isRefreshing = false
             val latest = viewModel.githubReleases.value.firstOrNull()
             if (latest != null && onShowUpdateDrawer != null) {
-                onShowUpdateDrawer(latest)
+                if (AppUpdateManager.isNewerVersion(BuildConfig.VERSION_NAME, latest.version)) {
+                    onShowUpdateDrawer(latest)
+                }
             }
         }
     }
@@ -179,12 +183,15 @@ fun ChangelogScreen(
                                 Spacer(Modifier.width(16.dp))
                                 Column {
                                     Text(
-                                        "Mizan v2.0",
+                                        "Mizan v${BuildConfig.VERSION_NAME}",
                                         style = MaterialTheme.typography.titleLarge,
                                         fontWeight = FontWeight.Bold
                                     )
+                                    val hasUpdate = releases.firstOrNull()?.let {
+                                        AppUpdateManager.isNewerVersion(BuildConfig.VERSION_NAME, it.version)
+                                    } ?: false
                                     Text(
-                                        "Installed & Up to Date",
+                                        if (hasUpdate) "New Update Available" else "Installed & Up to Date",
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                     )
@@ -325,18 +332,33 @@ fun ChangelogScreen(
                                     verticalAlignment = Alignment.CenterVertically
                                 ) {
                                     if (release.downloadUrl != null && onShowUpdateDrawer != null) {
+                                        val isUpdate = AppUpdateManager.isNewerVersion(BuildConfig.VERSION_NAME, release.version)
+                                        val isCurrent = AppUpdateManager.isSameVersion(BuildConfig.VERSION_NAME, release.version)
+
                                         Button(
                                             onClick = { onShowUpdateDrawer(release) },
                                             shape = RoundedCornerShape(12.dp),
                                             contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
                                             colors = ButtonDefaults.buttonColors(
-                                                containerColor = MaterialTheme.colorScheme.primary,
-                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                                containerColor = if (isUpdate) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.secondaryContainer,
+                                                contentColor = if (isUpdate) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSecondaryContainer
                                             )
                                         ) {
-                                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Icon(
+                                                if (isUpdate) Icons.Default.RocketLaunch else Icons.Default.Download,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(16.dp)
+                                            )
                                             Spacer(Modifier.width(6.dp))
-                                            Text("Update / Download", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                            Text(
+                                                when {
+                                                    isUpdate -> "Update Now"
+                                                    isCurrent -> "Re-download APK"
+                                                    else -> "Download APK"
+                                                },
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold
+                                            )
                                         }
                                     }
                                     if (release.htmlUrl != null) {

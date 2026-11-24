@@ -50,14 +50,19 @@ class SettingsViewModel @Inject constructor(
                 if (fetched.isNotEmpty()) {
                     _githubReleases.value = fetched
                     if (isManualCheck) {
-                        _updateStatusMessage.value = "Fetched ${fetched.size} releases from GitHub!"
+                        val latest = fetched.firstOrNull()
+                        if (latest != null && com.hotaro.mizan.util.AppUpdateManager.isNewerVersion(com.hotaro.mizan.BuildConfig.VERSION_NAME, latest.version)) {
+                            _updateStatusMessage.value = "New version ${latest.version} is available!"
+                        } else {
+                            _updateStatusMessage.value = "You are on the latest version (v${com.hotaro.mizan.BuildConfig.VERSION_NAME})"
+                        }
                     }
                 } else if (isManualCheck) {
-                    _updateStatusMessage.value = "You have the latest version of Mizan!"
+                    _updateStatusMessage.value = "You are on the latest version (v${com.hotaro.mizan.BuildConfig.VERSION_NAME})"
                 }
             } catch (e: Exception) {
                 if (isManualCheck) {
-                    _updateStatusMessage.value = "Failed to fetch updates. Showing local notes."
+                    _updateStatusMessage.value = "Failed to connect to GitHub. Showing local release notes."
                 }
             } finally {
                 _isCheckingUpdate.value = false
