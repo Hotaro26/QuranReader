@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.RocketLaunch
@@ -36,6 +37,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ChangelogScreen(
     onBackClick: () -> Unit,
+    onShowUpdateDrawer: ((ReleaseNote) -> Unit)? = null,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
@@ -52,6 +54,10 @@ fun ChangelogScreen(
             isRefreshing = true
             viewModel.fetchReleases(isManualCheck = true)
             isRefreshing = false
+            val latest = viewModel.githubReleases.value.firstOrNull()
+            if (latest != null && onShowUpdateDrawer != null) {
+                onShowUpdateDrawer(latest)
+            }
         }
     }
 
@@ -312,18 +318,38 @@ fun ChangelogScreen(
                                 }
                             }
 
-                            if (release.htmlUrl != null) {
+                            if (release.htmlUrl != null || release.downloadUrl != null) {
                                 Spacer(Modifier.height(14.dp))
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    OutlinedButton(
-                                        onClick = {
-                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(release.htmlUrl))
-                                            context.startActivity(intent)
-                                        },
-                                        shape = RoundedCornerShape(12.dp),
-                                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                                    ) {
-                                        Text("View on GitHub", style = MaterialTheme.typography.labelMedium)
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    if (release.downloadUrl != null && onShowUpdateDrawer != null) {
+                                        Button(
+                                            onClick = { onShowUpdateDrawer(release) },
+                                            shape = RoundedCornerShape(12.dp),
+                                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            )
+                                        ) {
+                                            Icon(Icons.Default.Download, contentDescription = null, modifier = Modifier.size(16.dp))
+                                            Spacer(Modifier.width(6.dp))
+                                            Text("Update / Download", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                                        }
+                                    }
+                                    if (release.htmlUrl != null) {
+                                        OutlinedButton(
+                                            onClick = {
+                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(release.htmlUrl))
+                                                context.startActivity(intent)
+                                            },
+                                            shape = RoundedCornerShape(12.dp),
+                                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                                        ) {
+                                            Text("View on GitHub", style = MaterialTheme.typography.labelMedium)
+                                        }
                                     }
                                 }
                             }

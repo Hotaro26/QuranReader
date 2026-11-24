@@ -65,6 +65,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.hotaro.mizan.reminder.PrayerReminderManager
+import com.hotaro.mizan.ui.components.UpdateBottomDrawer
 import com.hotaro.mizan.ui.glass.AttendXFloatingNavBar
 import com.hotaro.mizan.ui.glass.AttendXNavTab
 import com.hotaro.mizan.ui.glass.GlassEffectConfig
@@ -96,6 +97,7 @@ import com.hotaro.mizan.ui.screen.SettingsScreen
 import com.hotaro.mizan.ui.screen.SurahListScreen
 import com.hotaro.mizan.ui.theme.MizanTheme
 import com.hotaro.mizan.ui.theme.QuranReaderTheme
+import com.hotaro.mizan.ui.viewmodel.AppUpdateViewModel
 import com.hotaro.mizan.ui.viewmodel.HomeViewModel
 import com.hotaro.mizan.ui.viewmodel.OnboardingViewModel
 import com.hotaro.mizan.ui.viewmodel.ThemeViewModel
@@ -182,11 +184,20 @@ fun QuranApp(
     appBackdrop: LayerBackdrop,
     initialConfig: com.hotaro.mizan.ui.viewmodel.AppThemeConfig,
     themeViewModel: ThemeViewModel = hiltViewModel(),
-    onboardingViewModel: OnboardingViewModel = hiltViewModel()
+    onboardingViewModel: OnboardingViewModel = hiltViewModel(),
+    updateViewModel: AppUpdateViewModel = hiltViewModel()
 ) {
     val hasCompletedOnboarding by onboardingViewModel.hasCompleted.collectAsState(initial = initialConfig.hasCompletedOnboarding)
     val windowAnimationStyle by themeViewModel.windowAnimationStyle.collectAsState(initial = initialConfig.windowAnimationStyle)
     val useClassicNavBar by themeViewModel.useClassicNavBar.collectAsState(initial = initialConfig.useClassicNavBar)
+
+    val showUpdateDrawer by updateViewModel.showUpdateDrawer.collectAsState()
+    val availableUpdate by updateViewModel.availableUpdate.collectAsState()
+    val downloadState by updateViewModel.downloadState.collectAsState()
+
+    LaunchedEffect(Unit) {
+        updateViewModel.checkUpdateOnLaunch()
+    }
 
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -472,9 +483,22 @@ fun QuranApp(
                         }
                         composable("changelog") {
                             ChangelogScreen(
-                                onBackClick = { navController.popBackStack() }
+                                onBackClick = { navController.popBackStack() },
+                                onShowUpdateDrawer = { release ->
+                                    updateViewModel.openUpdateDrawerManually(release)
+                                }
                             )
                         }
+                    }
+
+                    if (showUpdateDrawer && availableUpdate != null) {
+                        UpdateBottomDrawer(
+                            release = availableUpdate!!,
+                            downloadState = downloadState,
+                            onDownloadClick = { updateViewModel.startDownload() },
+                            onInstallClick = { file -> updateViewModel.installDownloadedApk(file) },
+                            onDismiss = { updateViewModel.dismissDrawer(rememberDismissed = true) }
+                        )
                     }
                 }
 

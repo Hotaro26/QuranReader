@@ -43,6 +43,7 @@ class PreferenceManager @Inject constructor(private val context: Context) {
         val USE_CLASSIC_NAV_BAR = booleanPreferencesKey("use_classic_nav_bar")
         val PRAYER_REMINDER_ENABLED = booleanPreferencesKey("prayer_reminder_enabled")
         val PRAYER_REMINDER_MINUTES_BEFORE = intPreferencesKey("prayer_reminder_minutes_before")
+        val DISMISSED_UPDATE_TAG = stringPreferencesKey("dismissed_update_tag")
     }
 
     val lastReadSurah: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -135,6 +136,10 @@ class PreferenceManager @Inject constructor(private val context: Context) {
 
     val prayerReminderMinutesBefore: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[PreferencesKeys.PRAYER_REMINDER_MINUTES_BEFORE] ?: 10
+    }
+
+    val dismissedUpdateTag: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.DISMISSED_UPDATE_TAG]
     }
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
@@ -259,6 +264,12 @@ class PreferenceManager @Inject constructor(private val context: Context) {
             preferences[PreferencesKeys.CACHED_ASR] = asr
             preferences[PreferencesKeys.CACHED_MAGHRIB] = maghrib
             preferences[PreferencesKeys.CACHED_ISHA] = isha
+        }
+    }
+
+    suspend fun saveDismissedUpdateTag(tag: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.DISMISSED_UPDATE_TAG] = tag
         }
     }
 }

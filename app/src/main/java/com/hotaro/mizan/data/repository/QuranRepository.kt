@@ -142,6 +142,7 @@ class QuranRepository @Inject constructor(
     val useClassicNavBar = preferenceManager.useClassicNavBar
     val prayerReminderEnabled = preferenceManager.prayerReminderEnabled
     val prayerReminderMinutesBefore = preferenceManager.prayerReminderMinutesBefore
+    val dismissedUpdateTag = preferenceManager.dismissedUpdateTag
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
         preferenceManager.saveLastRead(surah, ayah)
@@ -219,6 +220,10 @@ class QuranRepository @Inject constructor(
         preferenceManager.saveCachedPrayerTimes(fajr, dhuhr, asr, maghrib, isha)
     }
 
+    suspend fun saveDismissedUpdateTag(tag: String) {
+        preferenceManager.saveDismissedUpdateTag(tag)
+    }
+
     // Surah List
     fun getSurahs(): List<Surah> {
         return SurahData.surahs
@@ -258,10 +263,12 @@ class QuranRepository @Inject constructor(
 
                         ReleaseNote(
                             version = release.tagName ?: release.name ?: "v1.0.0",
+                            title = release.name ?: release.tagName ?: "Release",
                             date = formattedDate,
                             isLatest = index == 0,
                             tags = tags,
                             highlights = highlights,
+                            description = release.body,
                             downloadUrl = release.assets?.firstOrNull { it.name?.endsWith(".apk") == true }?.browserDownloadUrl,
                             htmlUrl = release.htmlUrl
                         )
