@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.hotaro.mizan.BuildConfig
 import com.hotaro.mizan.LocalFloatingNavBarPadding
 import com.hotaro.mizan.R
 import com.hotaro.mizan.data.model.Edition
@@ -1016,7 +1017,7 @@ fun ExpressiveAboutCard(onClick: () -> Unit = {}) {
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ) {
                             Text(
-                                "v2.0",
+                                "v${BuildConfig.VERSION_NAME}",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)

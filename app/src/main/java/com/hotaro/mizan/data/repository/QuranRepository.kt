@@ -224,6 +224,47 @@ class QuranRepository @Inject constructor(
         preferenceManager.saveDismissedUpdateTag(tag)
     }
 
+    // Tasbih
+    val tasbihSelectedDhikrIndex = preferenceManager.tasbihSelectedDhikrIndex
+    val tasbihCurrentCount = preferenceManager.tasbihCurrentCount
+    val tasbihTargetCount = preferenceManager.tasbihTargetCount
+    val tasbihLifetimeCount = preferenceManager.tasbihLifetimeCount
+    val tasbihDailyCount = preferenceManager.tasbihDailyCount
+    val tasbihLastDate = preferenceManager.tasbihLastDate
+    val tasbihVibrationEnabled = preferenceManager.tasbihVibrationEnabled
+    val tasbihSoundEnabled = preferenceManager.tasbihSoundEnabled
+    val tasbihCardPage = preferenceManager.tasbihCardPage
+
+    suspend fun saveTasbihState(
+        selectedDhikrIndex: Int,
+        currentCount: Int,
+        targetCount: Int,
+        dailyCount: Int,
+        lifetimeCount: Int,
+        lastDate: String
+    ) {
+        preferenceManager.saveTasbihState(
+            selectedDhikrIndex,
+            currentCount,
+            targetCount,
+            dailyCount,
+            lifetimeCount,
+            lastDate
+        )
+    }
+
+    suspend fun saveTasbihVibration(enabled: Boolean) {
+        preferenceManager.saveTasbihVibration(enabled)
+    }
+
+    suspend fun saveTasbihSound(enabled: Boolean) {
+        preferenceManager.saveTasbihSound(enabled)
+    }
+
+    suspend fun saveTasbihCardPage(page: Int) {
+        preferenceManager.saveTasbihCardPage(page)
+    }
+
     // Surah List
     fun getSurahs(): List<Surah> {
         return SurahData.surahs

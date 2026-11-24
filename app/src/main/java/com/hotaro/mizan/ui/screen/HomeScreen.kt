@@ -45,8 +45,10 @@ import com.hotaro.mizan.LocalFloatingNavBarPadding
 import com.hotaro.mizan.data.model.Bookmark
 import com.hotaro.mizan.data.model.PrayerTime
 import com.hotaro.mizan.data.model.Surah
+import com.hotaro.mizan.ui.components.QiblaTasbihCard
 import com.hotaro.mizan.ui.components.RoundedPullRefreshPage
 import com.hotaro.mizan.ui.viewmodel.HomeViewModel
+import com.hotaro.mizan.ui.viewmodel.TasbihViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +56,9 @@ fun HomeScreen(
     onContinueClick: (Surah, Int) -> Unit,
     onBookmarkClick: (Bookmark) -> Unit,
     onQiblaClick: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    onTasbihClick: () -> Unit = {},
+    viewModel: HomeViewModel = hiltViewModel(),
+    tasbihViewModel: TasbihViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -174,14 +178,16 @@ fun HomeScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(IntrinsicSize.Max),
+                            .height(140.dp),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        QiblaCard(
+                        QiblaTasbihCard(
                             modifier = Modifier
                                 .weight(1f)
                                 .fillMaxHeight(),
-                            onClick = onQiblaClick,
+                            onQiblaClick = onQiblaClick,
+                            onTasbihClick = onTasbihClick,
+                            tasbihViewModel = tasbihViewModel,
                             iconRotation = homeRotation.value
                         )
                         LastReadCard(

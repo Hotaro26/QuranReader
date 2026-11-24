@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Top Imam / Minaret Bead -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,4.5a2,2 0 1,0 0.001,0z" />
+    <!-- Tassel Threads -->
+    <path
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="1.2"
+        android:strokeLineCap="round"
+        android:pathData="M12,2.5L12,0.8M10.8,0.8L12,2.5L13.2,0.8" />
+    <!-- Prayer Beads Loop -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M8.5,6.5a1.8,1.8 0 1,0 0.001,0z M15.5,6.5a1.8,1.8 0 1,0 0.001,0z M6,10a1.8,1.8 0 1,0 0.001,0z M18,10a1.8,1.8 0 1,0 0.001,0z M5.5,14.2a1.8,1.8 0 1,0 0.001,0z M18.5,14.2a1.8,1.8 0 1,0 0.001,0z M7.5,18a1.8,1.8 0 1,0 0.001,0z M16.5,18a1.8,1.8 0 1,0 0.001,0z M12,20a1.8,1.8 0 1,0 0.001,0z" />
+</vector>

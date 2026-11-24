@@ -95,6 +95,7 @@ import com.hotaro.mizan.ui.screen.QiblaScreen
 import com.hotaro.mizan.ui.screen.ReaderScreen
 import com.hotaro.mizan.ui.screen.SettingsScreen
 import com.hotaro.mizan.ui.screen.SurahListScreen
+import com.hotaro.mizan.ui.screen.TasbihScreen
 import com.hotaro.mizan.ui.theme.MizanTheme
 import com.hotaro.mizan.ui.theme.QuranReaderTheme
 import com.hotaro.mizan.ui.viewmodel.AppUpdateViewModel
@@ -407,11 +408,19 @@ fun QuranApp(
                                 },
                                 onQiblaClick = {
                                     navController.navigate("qibla")
+                                },
+                                onTasbihClick = {
+                                    navController.navigate("tasbih")
                                 }
                             )
                         }
                         composable("qibla") {
                             QiblaScreen(
+                                onBackClick = { navController.popBackStack() }
+                            )
+                        }
+                        composable("tasbih") {
+                            TasbihScreen(
                                 onBackClick = { navController.popBackStack() }
                             )
                         }

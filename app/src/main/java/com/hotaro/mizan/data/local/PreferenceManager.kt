@@ -44,6 +44,15 @@ class PreferenceManager @Inject constructor(private val context: Context) {
         val PRAYER_REMINDER_ENABLED = booleanPreferencesKey("prayer_reminder_enabled")
         val PRAYER_REMINDER_MINUTES_BEFORE = intPreferencesKey("prayer_reminder_minutes_before")
         val DISMISSED_UPDATE_TAG = stringPreferencesKey("dismissed_update_tag")
+        val TASBIH_SELECTED_DHIKR_INDEX = intPreferencesKey("tasbih_selected_dhikr_index")
+        val TASBIH_CURRENT_COUNT = intPreferencesKey("tasbih_current_count")
+        val TASBIH_TARGET_COUNT = intPreferencesKey("tasbih_target_count")
+        val TASBIH_LIFETIME_COUNT = intPreferencesKey("tasbih_lifetime_count")
+        val TASBIH_DAILY_COUNT = intPreferencesKey("tasbih_daily_count")
+        val TASBIH_LAST_DATE = stringPreferencesKey("tasbih_last_date")
+        val TASBIH_VIBRATION_ENABLED = booleanPreferencesKey("tasbih_vibration_enabled")
+        val TASBIH_SOUND_ENABLED = booleanPreferencesKey("tasbih_sound_enabled")
+        val TASBIH_CARD_PAGE = intPreferencesKey("tasbih_card_page")
     }
 
     val lastReadSurah: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -270,6 +279,78 @@ class PreferenceManager @Inject constructor(private val context: Context) {
     suspend fun saveDismissedUpdateTag(tag: String) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.DISMISSED_UPDATE_TAG] = tag
+        }
+    }
+
+    val tasbihSelectedDhikrIndex: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.TASBIH_SELECTED_DHIKR_INDEX] ?: 0
+    }
+
+    val tasbihCurrentCount: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.TASBIH_CURRENT_COUNT] ?: 0
+    }
+
+    val tasbihTargetCount: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.TASBIH_TARGET_COUNT] ?: 33
+    }
+
+    val tasbihLifetimeCount: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.TASBIH_LIFETIME_COUNT] ?: 0
+    }
+
+    val tasbihDailyCount: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.TASBIH_DAILY_COUNT] ?: 0
+    }
+
+    val tasbihLastDate: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.TASBIH_LAST_DATE] ?: ""
+    }
+
+    val tasbihVibrationEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.TASBIH_VIBRATION_ENABLED] ?: true
+    }
+
+    val tasbihSoundEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.TASBIH_SOUND_ENABLED] ?: false
+    }
+
+    val tasbihCardPage: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.TASBIH_CARD_PAGE] ?: 0
+    }
+
+    suspend fun saveTasbihCardPage(page: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.TASBIH_CARD_PAGE] = page
+        }
+    }
+
+    suspend fun saveTasbihState(
+        selectedDhikrIndex: Int,
+        currentCount: Int,
+        targetCount: Int,
+        dailyCount: Int,
+        lifetimeCount: Int,
+        lastDate: String
+    ) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.TASBIH_SELECTED_DHIKR_INDEX] = selectedDhikrIndex
+            preferences[PreferencesKeys.TASBIH_CURRENT_COUNT] = currentCount
+            preferences[PreferencesKeys.TASBIH_TARGET_COUNT] = targetCount
+            preferences[PreferencesKeys.TASBIH_DAILY_COUNT] = dailyCount
+            preferences[PreferencesKeys.TASBIH_LIFETIME_COUNT] = lifetimeCount
+            preferences[PreferencesKeys.TASBIH_LAST_DATE] = lastDate
+        }
+    }
+
+    suspend fun saveTasbihVibration(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.TASBIH_VIBRATION_ENABLED] = enabled
+        }
+    }
+
+    suspend fun saveTasbihSound(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.TASBIH_SOUND_ENABLED] = enabled
         }
     }
 }
