@@ -3,10 +3,12 @@ package com.hotaro.quranreader.ui.screen
 
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,21 +20,36 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import com.hotaro.quranreader.R
+import com.hotaro.quranreader.LocalFloatingNavBarPadding
+import com.hotaro.quranreader.data.model.Edition
 import com.hotaro.quranreader.ui.viewmodel.SettingsViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+// AttendX-inspired card corner grouping shapes
+object SettingsGroupShape {
+    val SINGLE = RoundedCornerShape(24.dp)
+    val FIRST = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 8.dp, bottomEnd = 8.dp)
+    val MIDDLE = RoundedCornerShape(8.dp)
+    val LAST = RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
+
+    fun getShape(index: Int, total: Int): RoundedCornerShape {
+        return when {
+            total <= 1 -> SINGLE
+            index == 0 -> FIRST
+            index == total - 1 -> LAST
+            else -> MIDDLE
+        }
+    }
+}
+
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel()
@@ -45,25 +62,42 @@ fun SettingsScreen(
     val prayerCalculationMethod by viewModel.prayerCalculationMethod.collectAsState()
     val editions by viewModel.filteredEditions.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
+    val navBarPadding = LocalFloatingNavBarPadding.current
 
-    var showTranslationDialog by remember { mutableStateOf(false) }
+    var showTranslationSheet by remember { mutableStateOf(false) }
+    var showCalculationSheet by remember { mutableStateOf(false) }
     var showSupportDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val myUpiId = "sakibreza035@okaxis"
 
-    val calculationMethods = listOf(
-        "Shia Ithna-Ashari" to 0,
-        "University of Islamic Sciences, Karachi" to 1,
-        "Islamic Society of North America" to 2,
-        "Muslim World League" to 3,
-        "Umm Al-Qura University, Makkah" to 4,
-        "Egyptian General Authority of Survey" to 5
-    )
+    val calculationMethods = remember {
+        listOf(
+            "Shia Ithna-Ashari" to 0,
+            "University of Islamic Sciences, Karachi" to 1,
+            "Islamic Society of North America" to 2,
+            "Muslim World League" to 3,
+            "Umm Al-Qura University, Makkah" to 4,
+            "Egyptian General Authority of Survey" to 5
+        )
+    }
+
+    val currentMethodLabel = calculationMethods.find { it.second == prayerCalculationMethod }?.first
+        ?: "Islamic Society of North America"
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings", style = MaterialTheme.typography.headlineLarge) }
+                title = { 
+                    Text(
+                        "Settings", 
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Black
+                    ) 
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
             )
         }
     ) { innerPadding ->
@@ -75,128 +109,280 @@ fun SettingsScreen(
                 modifier = Modifier
                     .widthIn(max = 840.dp)
                     .fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = navBarPadding + 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                // Support Hero Card
                 item {
-                SupportDevCard(
-                    onSupportClick = {
-                        val payeeName = "Hotaro"
-                        val transactionNote = "Support Quran Reader Development"
-                        
-                        val uri = Uri.parse("upi://pay").buildUpon()
-                            .appendQueryParameter("pa", myUpiId)
-                            .appendQueryParameter("pn", payeeName)
-                            .appendQueryParameter("tn", transactionNote)
-                            .appendQueryParameter("am", "0")
-                            .appendQueryParameter("cu", "INR")
-                            .build()
-                        
-                        val upiIntent = Intent(Intent.ACTION_VIEW, uri)
-                        try {
-                            context.startActivity(upiIntent)
-                        } catch (e: Exception) {
-                            showSupportDialog = true
+                    ExpressiveSupportCard(
+                        onSupportClick = {
+                            val uri = Uri.parse("upi://pay").buildUpon()
+                                .appendQueryParameter("pa", myUpiId)
+                                .appendQueryParameter("pn", "Hotaro")
+                                .appendQueryParameter("tn", "Support Quran Reader Development")
+                                .appendQueryParameter("am", "0")
+                                .appendQueryParameter("cu", "INR")
+                                .build()
+                            
+                            val upiIntent = Intent(Intent.ACTION_VIEW, uri)
+                            try {
+                                context.startActivity(upiIntent)
+                            } catch (e: Exception) {
+                                showSupportDialog = true
+                            }
                         }
-                    }
-                )
-            }
+                    )
+                }
 
-            item {
-                Text(text = "Appearance", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            }
+                // Section: Appearance
+                item {
+                    SettingsSectionHeader("Appearance")
+                }
+                item {
+                    val themes = listOf("System" to 0, "Light" to 1, "Dark" to 2)
+                    ExpressiveDropdownSettingItem(
+                        icon = Icons.Default.Visibility,
+                        title = "Theme Mode",
+                        subtitle = "Select app appearance",
+                        currentValue = themes.find { it.second == themeMode }?.first ?: "System",
+                        options = themes,
+                        shape = SettingsGroupShape.getShape(0, 4),
+                        onSelected = { viewModel.setThemeMode(it) }
+                    )
+                }
+                item {
+                    val palettes = listOf(
+                        "Material You" to "dynamic",
+                        "Classic Green" to "classic",
+                        "Lavender" to "lavender",
+                        "Pink" to "pink",
+                        "Mocha" to "mocha",
+                        "Catppuccin" to "catppuccin",
+                        "Monochrome" to "monochrome"
+                    )
+                    ExpressiveDropdownSettingItem(
+                        icon = Icons.Default.ColorLens,
+                        title = "Color Palette",
+                        subtitle = "Personalize colors across the UI",
+                        currentValue = palettes.find { it.second == colorPalette }?.first ?: "Material You",
+                        options = palettes,
+                        shape = SettingsGroupShape.getShape(1, 4),
+                        onSelected = { viewModel.setColorPalette(it) }
+                    )
+                }
+                item {
+                    val fonts = listOf(
+                        "Default" to "default",
+                        "Hey Comic" to "hey_comic",
+                        "KG Happy" to "kghappy",
+                        "Matcha Cih" to "matcha_cih",
+                        "Nirakolu" to "nirakolu",
+                        "Romantic Sunrise" to "romantic_sunrise",
+                        "Takeover" to "takeover",
+                        "Takeover 3D" to "takeover_3d",
+                        "Scratch Boys" to "scratch_boys"
+                    )
+                    ExpressiveDropdownSettingItem(
+                        icon = Icons.Default.TextFields,
+                        title = "App Typography",
+                        subtitle = "Choose reading & UI font",
+                        currentValue = fonts.find { it.second == appFont }?.first ?: "Default",
+                        options = fonts,
+                        shape = SettingsGroupShape.getShape(2, 4),
+                        onSelected = { viewModel.setAppFont(it) }
+                    )
+                }
+                item {
+                    ExpressiveDropdownSettingItem(
+                        icon = Icons.Default.Schedule,
+                        title = "Clock Format",
+                        subtitle = "Display style for prayer times",
+                        currentValue = if (use24HourFormat) "24-hour" else "12-hour",
+                        options = listOf("12-hour" to false, "24-hour" to true),
+                        shape = SettingsGroupShape.getShape(3, 4),
+                        onSelected = { viewModel.setUse24HourFormat(it) }
+                    )
+                }
 
-            item {
-                CustomizeCard(
-                    themeMode = themeMode,
-                    onThemeModeSelected = { viewModel.setThemeMode(it) },
-                    colorPalette = colorPalette,
-                    onPaletteSelected = { viewModel.setColorPalette(it) },
-                    appFont = appFont,
-                    onFontSelected = { viewModel.setAppFont(it) },
-                    use24HourFormat = use24HourFormat,
-                    onFormatSelected = { viewModel.setUse24HourFormat(it) }
-                )
-            }
+                // Section: Reading & Prayers (Conjoined)
+                item {
+                    Spacer(Modifier.height(8.dp))
+                    SettingsSectionHeader("Reading & Prayer Times")
+                }
+                item {
+                    ExpressiveActionSettingItem(
+                        icon = Icons.Default.Translate,
+                        title = "Translation Edition",
+                        subtitle = selectedTranslation,
+                        shape = SettingsGroupShape.getShape(0, 2),
+                        onClick = { showTranslationSheet = true }
+                    )
+                }
+                item {
+                    ExpressiveActionSettingItem(
+                        icon = Icons.Default.Mosque,
+                        title = "Calculation Method",
+                        subtitle = currentMethodLabel,
+                        shape = SettingsGroupShape.getShape(1, 2),
+                        onClick = { showCalculationSheet = true }
+                    )
+                }
 
-            item {
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                Text(text = "Reading", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            }
-
-            item {
-                ListItem(
-                    headlineContent = { Text("Translation") },
-                    supportingContent = { Text(selectedTranslation) },
-                    leadingContent = { Icon(Icons.Default.Translate, contentDescription = null) },
-                    modifier = Modifier.clickable { showTranslationDialog = true }
-                )
-            }
-
-            item {
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                Text(text = "Prayer Times", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            }
-
-            item {
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        SettingDropdown(
-                            label = "Calculation Method",
-                            icon = Icons.Default.Mosque,
-                            currentValue = calculationMethods.find { it.second == prayerCalculationMethod }?.first ?: "Islamic Society of North America",
-                            options = calculationMethods,
-                            onOptionSelected = { viewModel.setPrayerCalculationMethod(it) }
-                        )
-                    }
+                // Section: About
+                item {
+                    Spacer(Modifier.height(8.dp))
+                    SettingsSectionHeader("About & Developer")
+                }
+                item {
+                    ExpressiveAboutCard()
                 }
             }
+        }
+    }
 
-            item {
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                Text(text = "Todo History", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            }
+    // Modal Bottom Sheet for Translation Edition Selection
+    if (showTranslationSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showTranslationSheet = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "Select Translation",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
 
-            item {
-                val todoHistory by viewModel.todoHistory.collectAsState()
-                if (todoHistory.isEmpty()) {
-                    Text("No history yet.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        todoHistory.forEach { (date, todos) ->
-                            Text(text = date, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                            Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))) {
-                                Column(modifier = Modifier.padding(8.dp)) {
-                                    todos.forEach { todo ->
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Icon(Icons.Default.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
-                                            Spacer(Modifier.width(8.dp))
-                                            Text(todo.title, style = MaterialTheme.typography.bodyMedium)
-                                            Spacer(Modifier.weight(1f))
-                                            IconButton(onClick = { viewModel.deleteTodo(todo) }, modifier = Modifier.size(24.dp)) {
-                                                Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error)
-                                            }
-                                        }
-                                    }
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { viewModel.updateSearchQuery(it) },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("Search translations or authors...") },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    shape = RoundedCornerShape(16.dp),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 420.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
+                    items(editions) { edition ->
+                        val isSelected = edition.identifier == selectedTranslation
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.selectTranslation(edition)
+                                    showTranslationSheet = false
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = edition.name,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    )
+                                    Text(
+                                        text = "${edition.language} • ${edition.author}",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (isSelected) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
                                 }
                             }
                         }
                     }
                 }
             }
-
-            item {
-                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
-                Text(text = "About", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-            }
-
-            item {
-                AboutAppCard()
-            }
         }
+    }
+
+    // Modal Bottom Sheet for Prayer Calculation Method Selection
+    if (showCalculationSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        ModalBottomSheet(
+            onDismissRequest = { showCalculationSheet = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "Calculation Method",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 14.dp)
+                )
+
+                LazyColumn(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 24.dp)
+                ) {
+                    items(calculationMethods) { (label, value) ->
+                        val isSelected = value == prayerCalculationMethod
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    viewModel.setPrayerCalculationMethod(value)
+                                    showCalculationSheet = false
+                                }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                if (isSelected) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -209,68 +395,27 @@ fun SettingsScreen(
                 }
             },
             icon = { Icon(Icons.Default.Favorite, null, tint = MaterialTheme.colorScheme.primary) },
-            title = { Text("Support hotaro", textAlign = TextAlign.Center) },
+            title = { Text("Support Development", textAlign = TextAlign.Center) },
             text = {
-                Column(horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        "Thank you for considering support! If your UPI app didn't open automatically, you can use this ID:",
+                        "Thank you for considering support! If your UPI app didn't open automatically, you can send to this VPA:",
                         textAlign = TextAlign.Center,
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(Modifier.height(16.dp))
                     Surface(
                         color = MaterialTheme.colorScheme.secondaryContainer,
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(16.dp)
                     ) {
                         Text(
                             text = myUpiId,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                     }
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        "Every bit of support helps keep Quran Reader growing. ❤️",
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-            },
-            shape = RoundedCornerShape(28.dp)
-        )
-    }
-
-    if (showTranslationDialog) {
-        AlertDialog(
-            onDismissRequest = { showTranslationDialog = false },
-            title = { Text("Select Translation") },
-            text = {
-                Column {
-                    SearchBar(
-                        query = searchQuery,
-                        onQueryChange = { viewModel.updateSearchQuery(it) },
-                        modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
-                    )
-                    LazyColumn(modifier = Modifier.heightIn(max = 400.dp)) {
-                        items(editions) { edition ->
-                            ListItem(
-                                headlineContent = { Text(edition.name) },
-                                supportingContent = { Text("${edition.author} • ${edition.language.uppercase()}") },
-                                modifier = Modifier.clickable {
-                                    viewModel.selectTranslation(edition)
-                                    showTranslationDialog = false
-                                }
-                            )
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { showTranslationDialog = false }) {
-                    Text("Close")
                 }
             }
         )
@@ -278,192 +423,107 @@ fun SettingsScreen(
 }
 
 @Composable
-fun SupportDevCard(
-    onSupportClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)
-        )
-    ) {
-        Column(Modifier.padding(20.dp)) {
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Icon(Icons.Default.Favorite, null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(Modifier.width(12.dp))
-                Text(
-                    "Support Development",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Help keep Quran Reader alive and ad-free. Your support helps me maintain and improve the app.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onPrimaryContainer
-            )
-            Spacer(Modifier.height(16.dp))
-            
-            Button(
-                onClick = onSupportClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary
-                )
-            ) {
-                Icon(Icons.Default.Payments, null)
-                Spacer(Modifier.width(8.dp))
-                Text("Support via UPI")
-            }
-        }
-    }
-}
-
-@Composable
-fun SearchBar(
-    query: String,
-    onQueryChange: (String) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = query,
-        onValueChange = onQueryChange,
-        modifier = modifier,
-        placeholder = { Text("Search editions...") },
-        leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-        shape = MaterialTheme.shapes.medium,
-        singleLine = true
+fun SettingsSectionHeader(title: String) {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)
     )
 }
 
 @Composable
-fun CustomizeCard(
-    themeMode: Int,
-    onThemeModeSelected: (Int) -> Unit,
-    colorPalette: String,
-    onPaletteSelected: (String) -> Unit,
-    appFont: String,
-    onFontSelected: (String) -> Unit,
-    use24HourFormat: Boolean,
-    onFormatSelected: (Boolean) -> Unit
-) {
-    val palettes = listOf(
-        "Material You" to "dynamic",
-        "Classic Green" to "classic",
-        "Lavender" to "lavender",
-        "Pink" to "pink",
-        "Mocha" to "mocha",
-        "Catppuccin" to "catppuccin",
-        "Monochrome" to "monochrome"
-    )
-
-    val fonts = listOf(
-        "Default" to "default",
-        "Hey Comic" to "hey_comic",
-        "KG Happy" to "kghappy",
-        "Matcha Cih" to "matcha_cih",
-        "Nirakolu" to "nirakolu",
-        "Romantic Sunrise" to "romantic_sunrise",
-        "Takeover" to "takeover",
-        "Takeover 3D" to "takeover_3d",
-        "Scratch Boys" to "scratch_boys"
-    )
-
-    val themes = listOf(
-        "System" to 0,
-        "Light" to 1,
-        "Dark" to 2
-    )
-
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            SettingDropdown(
-                label = "Theme Mode",
-                icon = Icons.Default.Visibility,
-                currentValue = themes.find { it.second == themeMode }?.first ?: "System",
-                options = themes,
-                onOptionSelected = { onThemeModeSelected(it) }
-            )
-
-            SettingDropdown(
-                label = "Color Palette",
-                icon = Icons.Default.ColorLens,
-                currentValue = palettes.find { it.second == colorPalette }?.first ?: "Material You",
-                options = palettes,
-                onOptionSelected = { onPaletteSelected(it) }
-            )
-
-            SettingDropdown(
-                label = "App Font",
-                icon = Icons.Default.TextFields,
-                currentValue = fonts.find { it.second == appFont }?.first ?: "Default",
-                options = fonts,
-                onOptionSelected = { onFontSelected(it) }
-            )
-
-            SettingDropdown(
-                label = "Clock Format",
-                icon = Icons.Default.Schedule,
-                currentValue = if (use24HourFormat) "24-hour" else "12-hour",
-                options = listOf("12-hour" to false, "24-hour" to true),
-                onOptionSelected = { onFormatSelected(it) }
-            )
-        }
-    }
-}
-
-@Composable
-fun <T> SettingDropdown(
-    label: String,
+fun <T> ExpressiveDropdownSettingItem(
     icon: ImageVector,
+    title: String,
+    subtitle: String,
     currentValue: String,
     options: List<Pair<String, T>>,
-    onOptionSelected: (T) -> Unit
+    shape: RoundedCornerShape,
+    onSelected: (T) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMediumLow),
+        label = "scale"
+    )
 
-    Column {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) { expanded = true },
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .padding(horizontal = 18.dp, vertical = 14.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = label, style = MaterialTheme.typography.titleSmall)
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(42.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+                }
             }
-
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
             Box {
                 Surface(
-                    onClick = { expanded = true },
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 ) {
                     Row(
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(text = currentValue, style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            text = currentValue,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(Modifier.width(4.dp))
                         Icon(Icons.Default.ArrowDropDown, contentDescription = null, modifier = Modifier.size(18.dp))
                     }
                 }
-
                 DropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false }
                 ) {
                     options.forEach { (optionLabel, value) ->
                         DropdownMenuItem(
-                            text = { Text(optionLabel) },
+                            text = { Text(optionLabel, fontWeight = if (optionLabel == currentValue) FontWeight.Bold else FontWeight.Normal) },
                             onClick = {
-                                onOptionSelected(value)
+                                onSelected(value)
                                 expanded = false
                             }
                         )
@@ -474,72 +534,193 @@ fun <T> SettingDropdown(
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun FlowRow(
-    modifier: Modifier = Modifier,
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    content: @Composable FlowRowScope.() -> Unit
+fun ExpressiveActionSettingItem(
+    icon: ImageVector,
+    title: String,
+    subtitle: String,
+    shape: RoundedCornerShape,
+    onClick: () -> Unit
 ) {
-    androidx.compose.foundation.layout.FlowRow(
-        modifier = modifier,
-        horizontalArrangement = horizontalArrangement,
-        content = content
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = Spring.StiffnessMediumLow),
+        label = "scale"
     )
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .scale(scale)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null
+            ) { onClick() },
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(horizontal = 18.dp, vertical = 14.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.primaryContainer,
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.size(42.dp)
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+                }
+            }
+            Spacer(modifier = Modifier.width(16.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
 }
 
 @Composable
-fun AboutAppCard() {
+fun ExpressiveSupportCard(
+    onSupportClick: () -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Column(Modifier.padding(22.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Favorite, null, modifier = Modifier.size(20.dp))
+                    }
+                }
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    "Support Quran Reader",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                "Keep Quran Reader ad-free, open, and evolving with continuous features and polish.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+            )
+            Spacer(Modifier.height(16.dp))
+            Button(
+                onClick = onSupportClick,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(18.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            ) {
+                Icon(Icons.Default.Payments, null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Support via UPI", fontWeight = FontWeight.Bold)
+            }
+        }
+    }
+}
+
+@Composable
+fun ExpressiveAboutCard() {
     val context = LocalContext.current
     Card(
         modifier = Modifier.fillMaxWidth(),
+        shape = SettingsGroupShape.SINGLE,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
-        )
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        elevation = CardDefaults.cardElevation(0.dp)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Info, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(text = "About App / Dev", style = MaterialTheme.typography.titleMedium)
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier = Modifier.size(40.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Info, contentDescription = null, modifier = Modifier.size(20.dp))
+                    }
+                }
+                Spacer(modifier = Modifier.width(14.dp))
+                Column {
+                    Text(
+                        text = "Quran Reader",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        text = "Crafted with ❤️ by Hotaro",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-            Spacer(modifier = Modifier.height(12.dp))
-            Text(
-                text = "Developed with ❤️ by Hotaro",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Hotaro26"))
-                    context.startActivity(intent)
-                }) {
+                FilledTonalButton(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Hotaro26"))
+                        context.startActivity(intent)
+                    },
+                    shape = RoundedCornerShape(14.dp)
+                ) {
                     Icon(Icons.Default.Link, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("GitHub")
                 }
-                OutlinedButton(onClick = {
-                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.pinterest.com/hotaro344/"))
-                    context.startActivity(intent)
-                }) {
+                FilledTonalButton(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.pinterest.com/hotaro344/"))
+                        context.startActivity(intent)
+                    },
+                    shape = RoundedCornerShape(14.dp)
+                ) {
                     Icon(Icons.Default.Link, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
                     Text("Pinterest")
                 }
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Tech Stack & APIs",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = "• Jetpack Compose & Kotlin\n• Hilt for Dependency Injection\n• Retrofit & Gson for Networking\n• Room & DataStore for Local Data\n• Quran API by Fawaz Ahmed",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
     }
 }

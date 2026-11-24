@@ -2,38 +2,45 @@ package com.hotaro.quranreader
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.view.HapticFeedbackConstants
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
 import android.os.Bundle
+import android.view.HapticFeedbackConstants
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
-import androidx.compose.animation.*
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
-import androidx.compose.ui.draw.scale
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Mosque
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Mosque
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.TaskAlt
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -45,23 +52,42 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.hotaro.quranreader.ui.glass.AttendXFloatingNavBar
+import com.hotaro.quranreader.ui.glass.AttendXNavTab
+import com.hotaro.quranreader.ui.glass.GlassEffectConfig
+import com.hotaro.quranreader.ui.glass.LocalAppBackdrop
+import com.hotaro.quranreader.ui.glass.LocalGlassEffectConfig
+import com.hotaro.quranreader.ui.glass.backdrop.backdrops.LayerBackdrop
+import com.hotaro.quranreader.ui.glass.backdrop.backdrops.layerBackdrop
+import com.hotaro.quranreader.ui.glass.backdrop.backdrops.rememberBackdropFreeze
+import com.hotaro.quranreader.ui.glass.backdrop.backdrops.rememberLayerBackdrop
+import com.hotaro.quranreader.ui.glass.floatingtabbar.rememberFloatingTabBarScrollConnection
+import com.hotaro.quranreader.ui.glass.isGlassAllowed
+import com.hotaro.quranreader.ui.navigation.sharedAxisXEnter
+import com.hotaro.quranreader.ui.navigation.sharedAxisXExit
+import com.hotaro.quranreader.ui.navigation.sharedAxisXPopEnter
+import com.hotaro.quranreader.ui.navigation.sharedAxisXPopExit
+import com.hotaro.quranreader.ui.navigation.slideFadeInFromRight
+import com.hotaro.quranreader.ui.navigation.slideFadeOutToRight
+import com.hotaro.quranreader.ui.navigation.slideFadeInFromLeft
+import com.hotaro.quranreader.ui.navigation.slideFadeOutToLeft
 import com.hotaro.quranreader.ui.screen.HomeScreen
-import com.hotaro.quranreader.ui.screen.OnboardingScreen
 import com.hotaro.quranreader.ui.screen.QiblaScreen
 import com.hotaro.quranreader.ui.screen.ReaderScreen
 import com.hotaro.quranreader.ui.screen.SettingsScreen
 import com.hotaro.quranreader.ui.screen.SurahListScreen
-import com.hotaro.quranreader.ui.screen.TrackerScreen
 import com.hotaro.quranreader.ui.theme.QuranReaderTheme
-import com.hotaro.quranreader.ui.viewmodel.OnboardingViewModel
 import com.hotaro.quranreader.ui.viewmodel.HomeViewModel
 import com.hotaro.quranreader.ui.viewmodel.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
+
+val LocalFloatingNavBarPadding = compositionLocalOf { 110.dp }
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
             val homeViewModel: HomeViewModel = hiltViewModel()
@@ -69,31 +95,40 @@ class MainActivity : ComponentActivity() {
             val colorPalette by themeViewModel.colorPalette.collectAsState(initial = "dynamic")
             val appFont by themeViewModel.appFont.collectAsState(initial = "default")
 
+            val glassConfig = remember {
+                GlassEffectConfig(
+                    globalEnabled = true,
+                    vibrancy = 1.25f,
+                    blurRadius = 3f,
+                    surfaceOpacity = 0.50f,
+                    navBarEnabled = true
+                )
+            }
+            val appBackdrop = rememberLayerBackdrop()
+
             QuranReaderTheme(
                 themeMode = themeMode,
                 paletteName = colorPalette,
                 appFont = appFont
             ) {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                CompositionLocalProvider(
+                    LocalGlassEffectConfig provides glassConfig,
+                    LocalAppBackdrop provides appBackdrop
                 ) {
-                    QuranApp(homeViewModel)
+                    Surface(
+                        modifier = Modifier.fillMaxSize(),
+                        color = MaterialTheme.colorScheme.background
+                    ) {
+                        QuranApp(homeViewModel, appBackdrop)
+                    }
                 }
             }
         }
     }
 }
 
-data class NavigationItem(
-    val route: String,
-    val label: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
-)
-
 @Composable
-fun QuranApp(homeViewModel: HomeViewModel) {
+fun QuranApp(homeViewModel: HomeViewModel, appBackdrop: LayerBackdrop) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -119,290 +154,233 @@ fun QuranApp(homeViewModel: HomeViewModel) {
         }
     }
 
-    val items = listOf(
-        NavigationItem("home", "Home", Icons.Filled.Home, Icons.Outlined.Home),
-        NavigationItem("surahs", "Surahs", Icons.Filled.Mosque, Icons.Outlined.Mosque),
-        NavigationItem("tracker", "Tracker", Icons.Filled.TaskAlt, Icons.Outlined.TaskAlt),
-        NavigationItem("settings", "Settings", Icons.Filled.Settings, Icons.Outlined.Settings)
+    val navTabs = remember {
+        listOf(
+            AttendXNavTab("Home", Icons.Filled.Home, Icons.Outlined.Home),
+            AttendXNavTab("Surahs", Icons.Filled.Mosque, Icons.Outlined.Mosque),
+            AttendXNavTab("Settings", Icons.Filled.Settings, Icons.Outlined.Settings)
+        )
+    }
+
+    val tabRoutes = remember { listOf("home", "surahs", "settings") }
+    val showNavBar = currentDestination?.route in tabRoutes
+
+    val selectedTabIndex = remember(currentDestination?.route) {
+        val idx = tabRoutes.indexOf(currentDestination?.route)
+        if (idx >= 0) idx else 0
+    }
+
+    val scrollConnection = rememberFloatingTabBarScrollConnection(
+        initialIsInline = false,
     )
+    val backdropFreeze = rememberBackdropFreeze()
 
-    val showNavBar = currentDestination?.route in listOf("home", "surahs", "tracker", "settings")
-    var settingsRotationTarget by remember { mutableStateOf(0f) }
+    val density = LocalDensity.current
+    var navBarOccupiedPx by remember { mutableFloatStateOf(0f) }
+    val measuredNavBarPadding = with(density) { navBarOccupiedPx.toDp() }
+    val navBarBottomPadding = if (measuredNavBarPadding > 0.dp) {
+        measuredNavBarPadding + 20.dp
+    } else {
+        120.dp
+    }
 
-    Row(modifier = Modifier.fillMaxSize()) {
-        if (isWideScreen && showNavBar) {
-            NavigationRail(
-                containerColor = MaterialTheme.colorScheme.background
-            ) {
-                Spacer(Modifier.weight(1f))
-                items.forEach { item ->
-                    val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-
-                    val scale by animateFloatAsState(
-                        targetValue = if (isSelected) 1.2f else 1f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        ),
-                        label = "scale"
-                    )
-
-                    val rotation by animateFloatAsState(
-                        targetValue = if (item.route == "settings") settingsRotationTarget else 0f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessLow
-                        ),
-                        label = "rotation"
-                    )
-
-                    NavigationRailItem(
-                        icon = { 
-                            Icon(
-                                imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                contentDescription = item.label,
-                                modifier = Modifier
-                                    .scale(scale)
-                                    .rotate(rotation)
-                            )
-                        },
-                        label = { Text(item.label) },
-                        selected = isSelected,
-                        onClick = {
-                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                            if (item.route == "settings") {
-                                settingsRotationTarget += 360f
+    CompositionLocalProvider(LocalFloatingNavBarPadding provides navBarBottomPadding) {
+        Row(modifier = Modifier.fillMaxSize()) {
+            if (isWideScreen && showNavBar) {
+                NavigationRail(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ) {
+                    androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+                    navTabs.forEachIndexed { index, tab ->
+                        val isSelected = selectedTabIndex == index
+                        NavigationRailItem(
+                            icon = {
+                                Icon(
+                                    imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,
+                                    contentDescription = tab.label
+                                )
+                            },
+                            label = { Text(tab.label) },
+                            selected = isSelected,
+                            onClick = {
+                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                if (tabRoutes[index] == "home") {
+                                    homeViewModel.triggerHomeAnimation()
+                                }
+                                navController.navigate(tabRoutes[index]) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
                             }
-                            if (item.route == "home") {
+                        )
+                    }
+                    androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxSize()
+            ) {
+                // Screen content with backdrop sampling and scroll connections
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer()
+                        .then(
+                            if (isGlassAllowed()) {
+                                Modifier.layerBackdrop(
+                                    appBackdrop,
+                                    frozen = backdropFreeze.frozen
+                                )
+                            } else Modifier
+                        )
+                        .graphicsLayer()
+                        .nestedScroll(backdropFreeze.connection)
+                        .nestedScroll(scrollConnection)
+                ) {
+                    NavHost(
+                        navController = navController,
+                        startDestination = "home",
+                        modifier = Modifier.fillMaxSize(),
+                        enterTransition = {
+                            val initialRoute = initialState.destination.route
+                            val targetRoute = targetState.destination.route
+                            val initialIndex = tabRoutes.indexOf(initialRoute)
+                            val targetIndex = tabRoutes.indexOf(targetRoute)
+
+                            if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                                if (targetIndex > initialIndex) sharedAxisXEnter() else sharedAxisXPopEnter()
+                            } else {
+                                slideFadeInFromRight()
+                            }
+                        },
+                        exitTransition = {
+                            val initialRoute = initialState.destination.route
+                            val targetRoute = targetState.destination.route
+                            val initialIndex = tabRoutes.indexOf(initialRoute)
+                            val targetIndex = tabRoutes.indexOf(targetRoute)
+
+                            if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                                if (targetIndex > initialIndex) sharedAxisXExit() else sharedAxisXPopExit()
+                            } else {
+                                slideFadeOutToLeft()
+                            }
+                        },
+                        popEnterTransition = {
+                            val initialRoute = initialState.destination.route
+                            val targetRoute = targetState.destination.route
+                            val initialIndex = tabRoutes.indexOf(initialRoute)
+                            val targetIndex = tabRoutes.indexOf(targetRoute)
+
+                            if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                                if (targetIndex > initialIndex) sharedAxisXEnter() else sharedAxisXPopEnter()
+                            } else {
+                                slideFadeInFromLeft()
+                            }
+                        },
+                        popExitTransition = {
+                            val initialRoute = initialState.destination.route
+                            val targetRoute = targetState.destination.route
+                            val initialIndex = tabRoutes.indexOf(initialRoute)
+                            val targetIndex = tabRoutes.indexOf(targetRoute)
+
+                            if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                                if (targetIndex > initialIndex) sharedAxisXExit() else sharedAxisXPopExit()
+                            } else {
+                                slideFadeOutToRight()
+                            }
+                        }
+                    ) {
+                        composable("home") {
+                            HomeScreen(
+                                onContinueClick = { surah, ayah ->
+                                    navController.navigate("reader/${surah.number}/${surah.englishName}?ayah=$ayah")
+                                },
+                                onBookmarkClick = { bookmark ->
+                                    navController.navigate("reader/${bookmark.surahNumber}/${bookmark.surahName}?ayah=${bookmark.ayahNumber}")
+                                },
+                                onQiblaClick = {
+                                    navController.navigate("qibla")
+                                }
+                            )
+                        }
+                        composable("qibla") {
+                            QiblaScreen(
+                                onBackClick = { navController.popBackStack() }
+                            )
+                        }
+                        composable("surahs") {
+                            SurahListScreen(
+                                onSurahClick = { surah ->
+                                    navController.navigate("reader/${surah.number}/${surah.englishName}")
+                                }
+                            )
+                        }
+                        composable(
+                            route = "reader/{surahNumber}/{surahName}?ayah={ayahNumber}",
+                            arguments = listOf(
+                                navArgument("surahNumber") { type = NavType.IntType },
+                                navArgument("surahName") { type = NavType.StringType },
+                                navArgument("ayahNumber") {
+                                    type = NavType.IntType
+                                    defaultValue = 1
+                                }
+                            )
+                        ) { backStackEntry ->
+                            val surahNumber = backStackEntry.arguments?.getInt("surahNumber") ?: 1
+                            val surahName = backStackEntry.arguments?.getString("surahName") ?: ""
+                            val ayahNumber = backStackEntry.arguments?.getInt("ayahNumber") ?: 1
+                            ReaderScreen(
+                                surahNumber = surahNumber,
+                                surahName = surahName,
+                                initialAyah = ayahNumber,
+                                onBackClick = { navController.popBackStack() },
+                                onSettingsClick = {
+                                    navController.navigate("settings")
+                                }
+                            )
+                        }
+                        composable("settings") {
+                            SettingsScreen()
+                        }
+                    }
+                }
+
+                // AttendX Liquid Glass Bottom Navigation Bar elevated above system navigation gesture pill
+                if (!isWideScreen && showNavBar) {
+                    AttendXFloatingNavBar(
+                        tabs = navTabs,
+                        selectedIndex = selectedTabIndex,
+                        onTabSelected = { index ->
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                            val targetRoute = tabRoutes[index]
+                            if (targetRoute == "home") {
                                 homeViewModel.triggerHomeAnimation()
                             }
-                            navController.navigate(item.route) {
+                            navController.navigate(targetRoute) {
                                 popUpTo(navController.graph.findStartDestination().id) {
                                     saveState = true
                                 }
                                 launchSingleTop = true
                                 restoreState = true
                             }
-                        }
-                    )
-                }
-                Spacer(Modifier.weight(1f))
-            }
-        }
-
-        Scaffold(
-            modifier = Modifier.weight(1f),
-            bottomBar = {
-                if (!isWideScreen && showNavBar) {
-                    NavigationBar(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        tonalElevation = 0.dp
-                    ) {
-                        items.forEach { item ->
-                            val isSelected = currentDestination?.hierarchy?.any { it.route == item.route } == true
-
-                            val scale by animateFloatAsState(
-                                targetValue = if (isSelected) 1.2f else 1f,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow
-                                ),
-                                label = "scale"
-                            )
-
-                            val rotation by animateFloatAsState(
-                                targetValue = if (item.route == "settings") settingsRotationTarget else 0f,
-                                animationSpec = spring(
-                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                    stiffness = Spring.StiffnessLow
-                                ),
-                                label = "rotation"
-                            )
-
-                            NavigationBarItem(
-                                icon = { 
-                                    Icon(
-                                        imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
-                                        contentDescription = item.label,
-                                        modifier = Modifier
-                                            .scale(scale)
-                                            .rotate(rotation)
-                                    )
-                                },
-                                label = { Text(item.label) },
-                                selected = isSelected,
-                                onClick = {
-                                    view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                                    if (item.route == "settings") {
-                                        settingsRotationTarget += 360f
-                                    }
-                                    if (item.route == "home") {
-                                        homeViewModel.triggerHomeAnimation()
-                                    }
-                                    navController.navigate(item.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
+                        },
+                        scrollConnection = scrollConnection,
+                        modifier = Modifier
+                            .align(Alignment.BottomCenter)
+                            .onSizeChanged { size ->
+                                if (size.height > navBarOccupiedPx) {
+                                    navBarOccupiedPx = size.height.toFloat()
                                 }
-                            )
-                        }
-                    }
-                }
-            }
-        ) { innerPadding ->
-            NavHost(
-                navController = navController,
-                startDestination = "home",
-                modifier = Modifier.padding(innerPadding),
-                enterTransition = {
-                    val tabs = listOf("home", "surahs", "tracker", "settings")
-                    val initialIndex = tabs.indexOf(initialState.destination.route)
-                    val targetIndex = tabs.indexOf(targetState.destination.route)
-
-                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
-                        slideInHorizontally(
-                            initialOffsetX = { if (targetIndex > initialIndex) it else -it },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
-                        )
-                    } else {
-                        slideInHorizontally(
-                            initialOffsetX = { it },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
-                        )
-                    }
-                },
-                exitTransition = {
-                    val tabs = listOf("home", "surahs", "tracker", "settings")
-                    val initialIndex = tabs.indexOf(initialState.destination.route)
-                    val targetIndex = tabs.indexOf(targetState.destination.route)
-
-                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
-                        slideOutHorizontally(
-                            targetOffsetX = { if (targetIndex > initialIndex) -it else it },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
-                        )
-                    } else {
-                        slideOutHorizontally(
-                            targetOffsetX = { -it },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
-                        )
-                    }
-                },
-                popEnterTransition = {
-                    val tabs = listOf("home", "surahs", "tracker", "settings")
-                    val initialIndex = tabs.indexOf(initialState.destination.route)
-                    val targetIndex = tabs.indexOf(targetState.destination.route)
-
-                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
-                        slideInHorizontally(
-                            initialOffsetX = { if (targetIndex > initialIndex) it else -it },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
-                        )
-                    } else {
-                        slideInHorizontally(
-                            initialOffsetX = { -it },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
-                        )
-                    }
-                },
-                popExitTransition = {
-                    val tabs = listOf("home", "surahs", "tracker", "settings")
-                    val initialIndex = tabs.indexOf(initialState.destination.route)
-                    val targetIndex = tabs.indexOf(targetState.destination.route)
-
-                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
-                        slideOutHorizontally(
-                            targetOffsetX = { if (targetIndex > initialIndex) -it else it },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
-                        )
-                    } else {
-                        slideOutHorizontally(
-                            targetOffsetX = { it },
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioLowBouncy,
-                                stiffness = Spring.StiffnessMediumLow
-                            )
-                        )
-                    }
-                }
-            ) {                composable("home") {
-                    HomeScreen(
-                        onContinueClick = { surah, ayah ->
-                            navController.navigate("reader/${surah.number}/${surah.englishName}?ayah=$ayah")
-                        },
-                        onBookmarkClick = { bookmark ->
-                            navController.navigate("reader/${bookmark.surahNumber}/${bookmark.surahName}?ayah=${bookmark.ayahNumber}")
-                        },
-                        onQiblaClick = {
-                            navController.navigate("qibla")
-                        }
+                            }
+                            .navigationBarsPadding()
+                            .padding(bottom = 12.dp, start = 20.dp, end = 20.dp)
                     )
-                }
-                composable("qibla") {
-                    QiblaScreen(
-                        onBackClick = { navController.popBackStack() }
-                    )
-                }
-                composable("surahs") {
-                    SurahListScreen(
-                        onSurahClick = { surah ->
-                            navController.navigate("reader/${surah.number}/${surah.englishName}")
-                        }
-                    )
-                }
-                composable("tracker") {
-                    TrackerScreen()
-                }
-                composable(
-                    route = "reader/{surahNumber}/{surahName}?ayah={ayahNumber}",
-                    arguments = listOf(
-                        navArgument("surahNumber") { type = NavType.IntType },
-                        navArgument("surahName") { type = NavType.StringType },
-                        navArgument("ayahNumber") { 
-                            type = NavType.IntType
-                            defaultValue = 1
-                        }
-                    )
-                ) { backStackEntry ->
-                    val surahNumber = backStackEntry.arguments?.getInt("surahNumber") ?: 1
-                    val surahName = backStackEntry.arguments?.getString("surahName") ?: ""
-                    val ayahNumber = backStackEntry.arguments?.getInt("ayahNumber") ?: 1
-                    ReaderScreen(
-                        surahNumber = surahNumber,
-                        surahName = surahName,
-                        initialAyah = ayahNumber,
-                        onBackClick = { navController.popBackStack() },
-                        onSettingsClick = {
-                            navController.navigate("settings")
-                        }
-                    )
-                }
-                composable("settings") {
-                    SettingsScreen()
                 }
             }
         }

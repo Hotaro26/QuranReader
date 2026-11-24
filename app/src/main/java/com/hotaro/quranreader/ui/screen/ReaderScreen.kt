@@ -1,9 +1,16 @@
 package com.hotaro.quranreader.ui.screen
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
@@ -11,7 +18,11 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -34,7 +45,9 @@ fun ReaderScreen(
     val isLoading by viewModel.isLoading.collectAsState()
     val bookmarks by viewModel.bookmarks.collectAsState()
 
+    val navBarPadding = com.hotaro.quranreader.LocalFloatingNavBarPadding.current
     val listState = rememberLazyListState()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(rememberTopAppBarState())
 
     LaunchedEffect(surahNumber) {
         viewModel.loadSurah(surahNumber)
@@ -60,19 +73,56 @@ fun ReaderScreen(
     }
 
     Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
-                title = { Text(surahName) },
+                title = { 
+                    Text(
+                        surahName,
+                        style = MaterialTheme.typography.headlineLarge,
+                        fontWeight = FontWeight.Black
+                    ) 
+                },
                 navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                        modifier = Modifier
+                            .padding(start = 8.dp)
+                            .size(40.dp)
+                    ) {
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
                 },
                 actions = {
-                    IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Default.Settings, contentDescription = "Translation Settings")
+                    Surface(
+                        shape = CircleShape,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier
+                            .padding(end = 8.dp)
+                            .size(40.dp)
+                    ) {
+                        IconButton(onClick = onSettingsClick) {
+                            Icon(
+                                Icons.Default.Settings,
+                                contentDescription = "Translation Settings",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
-                }
+                },
+                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = androidx.compose.ui.graphics.Color.Transparent,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+                )
             )
         }
     ) { innerPadding ->
@@ -90,18 +140,18 @@ fun ReaderScreen(
                     modifier = Modifier
                         .widthIn(max = 840.dp)
                         .fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = navBarPadding + 24.dp),
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     items(ayahs) { ayah ->
-                    val isBookmarked = bookmarks.any { it.surahNumber == surahNumber && it.ayahNumber == ayah.numberInSurah }
-                    AyahItem(
-                        ayah = ayah,
-                        isBookmarked = isBookmarked,
-                        onBookmarkClick = { viewModel.toggleBookmark(ayah) }
-                    )
+                        val isBookmarked = bookmarks.any { it.surahNumber == surahNumber && it.ayahNumber == ayah.numberInSurah }
+                        AyahItem(
+                            ayah = ayah,
+                            isBookmarked = isBookmarked,
+                            onBookmarkClick = { viewModel.toggleBookmark(ayah) }
+                        )
+                    }
                 }
-            }
             }
         }
     }
@@ -113,50 +163,98 @@ fun AyahItem(
     isBookmarked: Boolean,
     onBookmarkClick: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+    // M3E: Wrapping verses in distinct, highly rounded floating cards rather than flat lists
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(32.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(24.dp)
         ) {
-            Text(
-                text = "${ayah.numberInSurah}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.secondary
-            )
-            IconButton(onClick = onBookmarkClick) {
-                Icon(
-                    imageVector = if (isBookmarked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
-                    contentDescription = "Bookmark",
-                    tint = if (isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Pill shape for verse number
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                ) {
+                    Text(
+                        text = "${ayah.numberInSurah}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+
+                // Interactive Bookmark Button with spring scale
+                val interactionSource = remember { MutableInteractionSource() }
+                val isPressed by interactionSource.collectIsPressedAsState()
+                val buttonScale by animateFloatAsState(
+                    targetValue = if (isPressed) 0.8f else 1f,
+                    animationSpec = spring(dampingRatio = 0.5f, stiffness = Spring.StiffnessMediumLow),
+                    label = "bookmark_scale"
+                )
+                val iconTint by animateColorAsState(
+                    targetValue = if (isBookmarked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
+                    label = "bookmark_color"
+                )
+
+                IconButton(
+                    onClick = onBookmarkClick,
+                    interactionSource = interactionSource,
+                    modifier = Modifier.scale(buttonScale)
+                ) {
+                    Icon(
+                        imageVector = if (isBookmarked) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                        contentDescription = "Bookmark",
+                        tint = iconTint,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+                Text(
+                    text = ayah.arabicText,
+                    style = MaterialTheme.typography.displaySmall.copy(
+                        lineHeight = 56.sp
+                    ),
+                    fontWeight = FontWeight.Normal,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth(),
+                    textAlign = TextAlign.Right
                 )
             }
-        }
 
-        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+            Spacer(modifier = Modifier.height(24.dp))
+            
+            // Replaced the flat divider with soft visual separation
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+            )
+
+            Spacer(modifier = Modifier.height(20.dp))
+
             Text(
-                text = ayah.arabicText,
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontSize = 28.sp,
-                    lineHeight = 44.sp
-                ),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Right
+                text = ayah.translationText,
+                style = MaterialTheme.typography.bodyLarge,
+                lineHeight = 28.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = ayah.translationText,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        
-        HorizontalDivider(
-            modifier = Modifier.padding(top = 16.dp),
-            thickness = 0.5.dp,
-            color = MaterialTheme.colorScheme.outlineVariant
-        )
     }
 }
