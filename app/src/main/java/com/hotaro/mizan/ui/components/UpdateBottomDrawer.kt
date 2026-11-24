@@ -134,11 +134,8 @@ fun UpdateBottomDrawer(
                     Spacer(Modifier.height(8.dp))
 
                     if (!release.description.isNullOrBlank()) {
-                        Text(
-                            text = release.description.trim(),
-                            style = MaterialTheme.typography.bodyMedium,
-                            lineHeight = 20.sp,
-                            color = MaterialTheme.colorScheme.onSurface
+                        MarkdownContent(
+                            markdown = release.description.trim()
                         )
                     } else if (release.highlights.isNotEmpty()) {
                         release.highlights.forEach { highlight ->
@@ -154,7 +151,7 @@ fun UpdateBottomDrawer(
                                     fontWeight = FontWeight.Bold
                                 )
                                 Text(
-                                    text = highlight,
+                                    text = parseInlineMarkdown(highlight, MaterialTheme.colorScheme.primary),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurface
                                 )

@@ -1115,36 +1115,48 @@ fun ExpressiveAboutCard(onClick: () -> Unit = {}) {
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                FilledTonalButton(
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                FilledTonalIconButton(
+                    onClick = {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://aki101.in"))
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.size(42.dp),
+                    shape = RoundedCornerShape(14.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Language,
+                        contentDescription = "Website",
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+                FilledTonalIconButton(
                     onClick = {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/Hotaro26"))
                         context.startActivity(intent)
                     },
+                    modifier = Modifier.size(42.dp),
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_github),
                         contentDescription = "GitHub",
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(20.dp)
                     )
-                    Spacer(Modifier.width(8.dp))
-                    Text("GitHub")
                 }
-                FilledTonalButton(
+                FilledTonalIconButton(
                     onClick = {
                         val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.pinterest.com/hotaro344/"))
                         context.startActivity(intent)
                     },
+                    modifier = Modifier.size(42.dp),
                     shape = RoundedCornerShape(14.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_pinterest),
                         contentDescription = "Pinterest",
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(20.dp)
                     )
-                    Spacer(Modifier.width(8.dp))
-                    Text("Pinterest")
                 }
             }
         }

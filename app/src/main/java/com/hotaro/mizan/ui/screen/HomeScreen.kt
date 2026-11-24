@@ -1,11 +1,8 @@
 package com.hotaro.mizan.ui.screen
 
 import android.Manifest
-import android.app.Activity
-import android.content.ContextWrapper
 import android.content.pm.PackageManager
 import android.view.HapticFeedbackConstants
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
@@ -76,18 +73,6 @@ fun HomeScreen(
     }
     
     val homeRotation = remember { Animatable(0f) }
-
-    val context = LocalContext.current
-    BackHandler {
-        var currentContext = context
-        while (currentContext is ContextWrapper) {
-            if (currentContext is Activity) {
-                currentContext.finish()
-                return@BackHandler
-            }
-            currentContext = currentContext.baseContext
-        }
-    }
 
     LaunchedEffect(Unit) {
         viewModel.fetchLocation()

@@ -30,6 +30,7 @@ import com.hotaro.mizan.BuildConfig
 import com.hotaro.mizan.LocalFloatingNavBarPadding
 import com.hotaro.mizan.data.model.ReleaseNote
 import com.hotaro.mizan.ui.components.RoundedPullRefreshPage
+import com.hotaro.mizan.ui.components.parseInlineMarkdown
 import com.hotaro.mizan.ui.viewmodel.SettingsViewModel
 import com.hotaro.mizan.util.AppUpdateManager
 import kotlinx.coroutines.delay
@@ -68,9 +69,20 @@ fun ChangelogScreen(
     val fallbackReleases = remember {
         listOf(
             ReleaseNote(
-                version = "v2.3",
+                version = "v2.4",
                 date = "24 November 2026",
                 isLatest = true,
+                tags = listOf("Feature", "Markdown", "Polish"),
+                highlights = listOf(
+                    "Built-in Markdown engine for update notes with headings, code blocks, bullet points, and styled text",
+                    "Native Android Predictive Back to Home gesture when quitting from the Home screen",
+                    "Redesigned About & Developer social bar with icon-only buttons",
+                    "Added official developer website link (aki101.in)"
+                )
+            ),
+            ReleaseNote(
+                version = "v2.3",
+                date = "24 November 2026",
                 tags = listOf("Feature", "Tasbih", "M3 Expressive"),
                 highlights = listOf(
                     "Interactive Digital Tasbih counter with milestone haptic feedback and sound",
@@ -343,7 +355,7 @@ fun ChangelogScreen(
                                 ) {
                                     Text("• ", fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
                                     Text(
-                                        highlight,
+                                        text = parseInlineMarkdown(highlight, MaterialTheme.colorScheme.primary),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
