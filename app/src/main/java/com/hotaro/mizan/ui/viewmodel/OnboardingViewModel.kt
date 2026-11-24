@@ -19,4 +19,10 @@ class OnboardingViewModel @Inject constructor(
             repository.saveHasCompletedOnboarding(true)
         }
     }
+
+    fun resetOnboarding() {
+        viewModelScope.launch {
+            repository.saveHasCompletedOnboarding(false)
+        }
+    }
 }

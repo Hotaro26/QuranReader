@@ -8,6 +8,9 @@ import com.hotaro.mizan.data.remote.QuranApiService
 import com.hotaro.mizan.data.remote.toDomain
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.text.SimpleDateFormat
+import java.util.Locale
+import java.util.TimeZone
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -205,5 +208,55 @@ class QuranRepository @Inject constructor(
     // Surah List
     fun getSurahs(): List<Surah> {
         return SurahData.surahs
+    }
+
+    // GitHub Releases & Changelog
+    suspend fun fetchGithubReleases(): List<ReleaseNote> {
+        try {
+            val response = externalApiService.getGithubReleases()
+            if (response.isSuccessful) {
+                val releases = response.body()
+                if (!releases.isNullOrEmpty()) {
+                    val inFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).apply {
+                        timeZone = TimeZone.getTimeZone("UTC")
+                    }
+                    val outFormat = SimpleDateFormat("dd MMMM yyyy", Locale.US)
+                    return releases.mapIndexed { index, release ->
+                        val formattedDate = try {
+                            val d = inFormat.parse(release.publishedAt ?: "")
+                            if (d != null) outFormat.format(d) else release.publishedAt ?: ""
+                        } catch (e: Exception) {
+                            release.publishedAt ?: ""
+                        }
+                        val rawHighlights = release.body?.lines()
+                            ?.map { it.trim().removePrefix("-").removePrefix("*").trim() }
+                            ?.filter { it.isNotEmpty() }
+                            ?: emptyList()
+                        val highlights = if (rawHighlights.isNotEmpty()) {
+                            rawHighlights
+                        } else {
+                            listOf(release.name?.takeIf { it.isNotBlank() } ?: "Release ${release.tagName ?: ""}")
+                        }
+                        val tags = mutableListOf<String>()
+                        if (index == 0) tags.add("Latest")
+                        if (release.prerelease) tags.add("Pre-release") else tags.add("Stable")
+                        if (!release.assets.isNullOrEmpty()) tags.add("APK available")
+
+                        ReleaseNote(
+                            version = release.tagName ?: release.name ?: "v1.0.0",
+                            date = formattedDate,
+                            isLatest = index == 0,
+                            tags = tags,
+                            highlights = highlights,
+                            downloadUrl = release.assets?.firstOrNull { it.name?.endsWith(".apk") == true }?.browserDownloadUrl,
+                            htmlUrl = release.htmlUrl
+                        )
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return emptyList()
     }
 }

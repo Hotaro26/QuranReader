@@ -71,7 +71,8 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     onElementsAndFeelClick: () -> Unit = {},
     onClockAndTimerClick: () -> Unit = {},
-    onAboutClick: () -> Unit = {}
+    onAboutClick: () -> Unit = {},
+    onPermissionsClick: () -> Unit = {}
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
     val colorPalette by viewModel.colorPalette.collectAsState()
@@ -261,7 +262,7 @@ fun SettingsScreen(
                         icon = Icons.Default.Translate,
                         title = "Translation Edition",
                         subtitle = selectedTranslation,
-                        shape = SettingsGroupShape.getShape(0, 2),
+                        shape = SettingsGroupShape.getShape(0, 3),
                         onClick = { showTranslationSheet = true }
                     )
                 }
@@ -270,8 +271,17 @@ fun SettingsScreen(
                         icon = Icons.Default.Mosque,
                         title = "Calculation Method",
                         subtitle = if (prayerCalculationMethod == -1) "Manual • Tap to adjust times" else currentMethodLabel,
-                        shape = SettingsGroupShape.getShape(1, 2),
+                        shape = SettingsGroupShape.getShape(1, 3),
                         onClick = { showCalculationSheet = true }
+                    )
+                }
+                item {
+                    ExpressiveActionSettingItem(
+                        icon = Icons.Default.Security,
+                        title = "Permissions & Setup",
+                        subtitle = "Review location, alarms, & notifications",
+                        shape = SettingsGroupShape.getShape(2, 3),
+                        onClick = onPermissionsClick
                     )
                 }
 
@@ -1046,11 +1056,18 @@ fun ExpressiveAboutCard(onClick: () -> Unit = {}) {
                             modifier = Modifier.size(13.dp)
                         )
                         Text(
-                            text = " by Hotaro • Tap for changelog & updates",
+                            text = " by Hotaro",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                    Spacer(Modifier.height(3.dp))
+                    Text(
+                        text = "Tap for changelogs and updates",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Medium
+                    )
                 }
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowForward,

@@ -9,6 +9,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -17,6 +18,7 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -76,6 +78,7 @@ import com.hotaro.mizan.ui.screen.ChangelogScreen
 import com.hotaro.mizan.ui.screen.ClockAndTimerScreen
 import com.hotaro.mizan.ui.screen.ElementsAndFeelScreen
 import com.hotaro.mizan.ui.screen.HomeScreen
+import com.hotaro.mizan.ui.screen.OnboardingScreen
 import com.hotaro.mizan.ui.screen.QiblaScreen
 import com.hotaro.mizan.ui.screen.ReaderScreen
 import com.hotaro.mizan.ui.screen.SettingsScreen
@@ -83,6 +86,7 @@ import com.hotaro.mizan.ui.screen.SurahListScreen
 import com.hotaro.mizan.ui.theme.MizanTheme
 import com.hotaro.mizan.ui.theme.QuranReaderTheme
 import com.hotaro.mizan.ui.viewmodel.HomeViewModel
+import com.hotaro.mizan.ui.viewmodel.OnboardingViewModel
 import com.hotaro.mizan.ui.viewmodel.ThemeViewModel
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -91,18 +95,24 @@ val LocalFloatingNavBarPadding = compositionLocalOf { 110.dp }
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
-            val homeViewModel: HomeViewModel = hiltViewModel()
-            val themeMode by themeViewModel.themeMode.collectAsState(initial = 0)
-            val colorPalette by themeViewModel.colorPalette.collectAsState(initial = "dynamic")
-            val appFont by themeViewModel.appFont.collectAsState(initial = "default")
-            val navBarBlurStyle by themeViewModel.navBarBlurStyle.collectAsState(initial = "glass")
+            val themeConfig by themeViewModel.themeConfig.collectAsState()
 
-            val glassConfig = remember(navBarBlurStyle) {
-                when (navBarBlurStyle) {
+            splashScreen.setKeepOnScreenCondition {
+                themeConfig == null
+            }
+
+            if (themeConfig == null) {
+                return@setContent
+            }
+
+            val currentConfig = themeConfig!!
+            val glassConfig = remember(currentConfig.navBarBlurStyle) {
+                when (currentConfig.navBarBlurStyle) {
                     "soft" -> GlassEffectConfig(
                         globalEnabled = true,
                         vibrancy = 1.0f,
@@ -129,9 +139,9 @@ class MainActivity : ComponentActivity() {
             val appBackdrop = rememberLayerBackdrop()
 
             QuranReaderTheme(
-                themeMode = themeMode,
-                paletteName = colorPalette,
-                appFont = appFont
+                themeMode = currentConfig.themeMode,
+                paletteName = currentConfig.colorPalette,
+                appFont = currentConfig.appFont
             ) {
                 CompositionLocalProvider(
                     LocalGlassEffectConfig provides glassConfig,
@@ -141,7 +151,11 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colorScheme.background
                     ) {
-                        QuranApp(homeViewModel, appBackdrop)
+                        QuranApp(
+                            homeViewModel = hiltViewModel(),
+                            appBackdrop = appBackdrop,
+                            initialOnboardingCompleted = currentConfig.hasCompletedOnboarding
+                        )
                     }
                 }
             }
@@ -150,7 +164,14 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun QuranApp(homeViewModel: HomeViewModel, appBackdrop: LayerBackdrop) {
+fun QuranApp(
+    homeViewModel: HomeViewModel,
+    appBackdrop: LayerBackdrop,
+    initialOnboardingCompleted: Boolean,
+    onboardingViewModel: OnboardingViewModel = hiltViewModel()
+) {
+    val hasCompletedOnboarding by onboardingViewModel.hasCompleted.collectAsState(initial = initialOnboardingCompleted)
+
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
@@ -158,23 +179,6 @@ fun QuranApp(homeViewModel: HomeViewModel, appBackdrop: LayerBackdrop) {
     val isWideScreen = configuration.screenWidthDp > 600
     val view = LocalView.current
     val context = LocalContext.current
-
-    val permissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestMultiplePermissions()
-    ) { _ -> }
-
-    LaunchedEffect(Unit) {
-        val hasPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-            ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-        if (!hasPermission) {
-            permissionLauncher.launch(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                )
-            )
-        }
-    }
 
     val navTabs = remember {
         listOf(
@@ -267,7 +271,7 @@ fun QuranApp(homeViewModel: HomeViewModel, appBackdrop: LayerBackdrop) {
                 ) {
                     NavHost(
                         navController = navController,
-                        startDestination = "home",
+                        startDestination = if (hasCompletedOnboarding == false) "onboarding" else "home",
                         modifier = Modifier.fillMaxSize(),
                         enterTransition = {
                             val initialRoute = initialState.destination.route
@@ -367,6 +371,15 @@ fun QuranApp(homeViewModel: HomeViewModel, appBackdrop: LayerBackdrop) {
                                 }
                             )
                         }
+                        composable("onboarding") {
+                            OnboardingScreen(
+                                onComplete = {
+                                    navController.navigate("home") {
+                                        popUpTo("onboarding") { inclusive = true }
+                                    }
+                                }
+                            )
+                        }
                         composable("settings") {
                             SettingsScreen(
                                 onElementsAndFeelClick = {
@@ -377,6 +390,9 @@ fun QuranApp(homeViewModel: HomeViewModel, appBackdrop: LayerBackdrop) {
                                 },
                                 onAboutClick = {
                                     navController.navigate("changelog")
+                                },
+                                onPermissionsClick = {
+                                    navController.navigate("onboarding")
                                 }
                             )
                         }

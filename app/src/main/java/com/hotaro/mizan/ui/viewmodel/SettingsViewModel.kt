@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hotaro.mizan.data.model.Edition
+import com.hotaro.mizan.data.model.ReleaseNote
 import com.hotaro.mizan.data.model.Todo
 import com.hotaro.mizan.data.repository.QuranRepository
 import com.hotaro.mizan.util.AppIconManager
@@ -23,6 +24,43 @@ class SettingsViewModel @Inject constructor(
     
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing = _isRefreshing.asStateFlow()
+
+    private val _githubReleases = MutableStateFlow<List<ReleaseNote>>(emptyList())
+    val githubReleases = _githubReleases.asStateFlow()
+
+    private val _isCheckingUpdate = MutableStateFlow(false)
+    val isCheckingUpdate = _isCheckingUpdate.asStateFlow()
+
+    private val _updateStatusMessage = MutableStateFlow<String?>(null)
+    val updateStatusMessage = _updateStatusMessage.asStateFlow()
+
+    init {
+        fetchReleases(isManualCheck = false)
+    }
+
+    fun fetchReleases(isManualCheck: Boolean = false) {
+        viewModelScope.launch {
+            _isCheckingUpdate.value = true
+            _updateStatusMessage.value = null
+            try {
+                val fetched = repository.fetchGithubReleases()
+                if (fetched.isNotEmpty()) {
+                    _githubReleases.value = fetched
+                    if (isManualCheck) {
+                        _updateStatusMessage.value = "Fetched ${fetched.size} releases from GitHub!"
+                    }
+                } else if (isManualCheck) {
+                    _updateStatusMessage.value = "You have the latest version of Mizan!"
+                }
+            } catch (e: Exception) {
+                if (isManualCheck) {
+                    _updateStatusMessage.value = "Failed to fetch updates. Showing local notes."
+                }
+            } finally {
+                _isCheckingUpdate.value = false
+            }
+        }
+    }
 
     fun refresh() {
         viewModelScope.launch {

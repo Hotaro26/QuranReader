@@ -24,45 +24,38 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.hotaro.mizan.LocalFloatingNavBarPadding
+import com.hotaro.mizan.data.model.ReleaseNote
 import com.hotaro.mizan.ui.components.RoundedPullRefreshPage
+import com.hotaro.mizan.ui.viewmodel.SettingsViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-
-data class ReleaseNote(
-    val version: String,
-    val date: String,
-    val isLatest: Boolean = false,
-    val tags: List<String>,
-    val highlights: List<String>
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangelogScreen(
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val navBarPadding = LocalFloatingNavBarPadding.current
     val coroutineScope = rememberCoroutineScope()
 
-    var isCheckingUpdate by remember { mutableStateOf(false) }
-    var updateStatusMessage by remember { mutableStateOf<String?>(null) }
+    val githubReleases by viewModel.githubReleases.collectAsState()
+    val isCheckingUpdate by viewModel.isCheckingUpdate.collectAsState()
+    val updateStatusMessage by viewModel.updateStatusMessage.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
 
     val checkUpdate: () -> Unit = {
         coroutineScope.launch {
-            isCheckingUpdate = true
             isRefreshing = true
-            updateStatusMessage = null
-            delay(1200)
-            isCheckingUpdate = false
+            viewModel.fetchReleases(isManualCheck = true)
             isRefreshing = false
-            updateStatusMessage = "You have the latest version of Mizan!"
         }
     }
 
-    val releases = remember {
+    val fallbackReleases = remember {
         listOf(
             ReleaseNote(
                 version = "v1.0.0",
@@ -101,6 +94,10 @@ fun ChangelogScreen(
                 )
             )
         )
+    }
+
+    val releases = remember(githubReleases) {
+        if (githubReleases.isNotEmpty()) githubReleases else fallbackReleases
     }
 
     RoundedPullRefreshPage(
@@ -312,6 +309,36 @@ fun ChangelogScreen(
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
+                                }
+                            }
+
+                            if (release.downloadUrl != null || release.htmlUrl != null) {
+                                Spacer(Modifier.height(14.dp))
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    if (release.downloadUrl != null) {
+                                        FilledTonalButton(
+                                            onClick = {
+                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(release.downloadUrl))
+                                                context.startActivity(intent)
+                                            },
+                                            shape = RoundedCornerShape(12.dp),
+                                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                                        ) {
+                                            Text("Download APK", style = MaterialTheme.typography.labelMedium)
+                                        }
+                                    }
+                                    if (release.htmlUrl != null) {
+                                        OutlinedButton(
+                                            onClick = {
+                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(release.htmlUrl))
+                                                context.startActivity(intent)
+                                            },
+                                            shape = RoundedCornerShape(12.dp),
+                                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                                        ) {
+                                            Text("View on GitHub", style = MaterialTheme.typography.labelMedium)
+                                        }
+                                    }
                                 }
                             }
                         }

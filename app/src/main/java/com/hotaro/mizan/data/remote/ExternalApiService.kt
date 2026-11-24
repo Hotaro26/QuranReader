@@ -30,6 +30,12 @@ interface ExternalApiService {
         @Query("longitude") lon: Double,
         @Query("method") method: Int = 2
     ): Response<AlAdhanResponse>
+
+    // GitHub API for Releases & Changelogs
+    @GET("https://api.github.com/repos/Hotaro26/QuranReader/releases")
+    suspend fun getGithubReleases(
+        @retrofit2.http.Header("User-Agent") userAgent: String = "Mizan-App"
+    ): Response<List<GithubReleaseDto>>
 }
 
 data class AlAdhanResponse(
@@ -71,4 +77,22 @@ data class WeatherDailyDto(
     val temperature_2m_max: List<Double>,
     val temperature_2m_min: List<Double>,
     val weathercode: List<Int>
+)
+
+data class GithubReleaseDto(
+    @com.google.gson.annotations.SerializedName("id") val id: Long?,
+    @com.google.gson.annotations.SerializedName("name") val name: String?,
+    @com.google.gson.annotations.SerializedName("tag_name") val tagName: String?,
+    @com.google.gson.annotations.SerializedName("published_at") val publishedAt: String?,
+    @com.google.gson.annotations.SerializedName("body") val body: String?,
+    @com.google.gson.annotations.SerializedName("html_url") val htmlUrl: String?,
+    @com.google.gson.annotations.SerializedName("prerelease") val prerelease: Boolean = false,
+    @com.google.gson.annotations.SerializedName("assets") val assets: List<GithubAssetDto>? = null
+)
+
+data class GithubAssetDto(
+    @com.google.gson.annotations.SerializedName("name") val name: String?,
+    @com.google.gson.annotations.SerializedName("size") val size: Long?,
+    @com.google.gson.annotations.SerializedName("download_count") val downloadCount: Int?,
+    @com.google.gson.annotations.SerializedName("browser_download_url") val browserDownloadUrl: String?
 )
