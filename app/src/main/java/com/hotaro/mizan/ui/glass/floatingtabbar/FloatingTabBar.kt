@@ -110,6 +110,7 @@ import androidx.compose.ui.util.fastCoerceIn
 import androidx.compose.ui.util.fastRoundToInt
 import androidx.compose.ui.util.lerp
 import androidx.compose.ui.graphics.isSpecified
+import com.hotaro.mizan.ui.glass.GlassStyle
 import com.hotaro.mizan.ui.glass.LocalGlassEffectConfig
 import com.hotaro.mizan.ui.glass.glassResolutionScale
 import com.hotaro.mizan.ui.glass.backdrop.Backdrop
@@ -1422,14 +1423,18 @@ private fun SharedTransitionScope.ExpandedTabs(
                             // uses a fixed 8dp; we drive it from the user's own
                             // glass blur-intensity setting instead of hardcoding.
                             blur(glassConfig.blurRadius.dp.toPx() * tabsBackdropScale)
-                            lens(
-                                15f.dp.toPx() * progress * tabsBackdropScale,
-                                18f.dp.toPx() * progress * tabsBackdropScale
-                            )
+                            if (glassConfig.style != GlassStyle.BLUR) {
+                                lens(
+                                    15f.dp.toPx() * progress * tabsBackdropScale,
+                                    18f.dp.toPx() * progress * tabsBackdropScale
+                                )
+                            }
                         },
                         highlight = {
-                            val progress = dampedDragAnimation.pressProgress
-                            Highlight.Default.copy(alpha = progress)
+                            if (glassConfig.style != GlassStyle.BLUR) {
+                                val progress = dampedDragAnimation.pressProgress
+                                Highlight.Default.copy(alpha = progress)
+                            } else null
                         },
                         onDrawSurface = { drawRect(colors.backgroundColor) },
                         // Same GPU-saving trick as Modifier.liquidGlass: record this
@@ -1519,27 +1524,24 @@ private fun SharedTransitionScope.ExpandedTabs(
                                 // over the first third of the press ramp, so by the
                                 // time the bend is at full strength there is only one
                                 // copy left to warp.
-                                lens(
-                                    lerp(0f.dp.toPx(), 10f.dp.toPx(), progress),
-                                    lerp(0f.dp.toPx(), 12f.dp.toPx(), progress),
-                                    // Dispersion is a drag-only flourish. It costs a
-                                    // second, heavier shader, so a puck sitting still
-                                    // should not be paying for it.
-                                    chromaticAberration = progress > 0.01f
-                                )
+                                if (glassConfig.style != GlassStyle.BLUR) {
+                                    lens(
+                                        lerp(0f.dp.toPx(), 10f.dp.toPx(), progress),
+                                        lerp(0f.dp.toPx(), 12f.dp.toPx(), progress),
+                                        // Dispersion is a drag-only flourish. It costs a
+                                        // second, heavier shader, so a puck sitting still
+                                        // should not be paying for it.
+                                        chromaticAberration = progress > 0.01f
+                                    )
+                                }
                             },
                             highlight = {
-                                val progress = dampedDragAnimation.pressProgress
-                                // Floored, not 0-at-rest. With no rim the puck's
-                                // shape came entirely from its dark wash below,
-                                // so it vanished into the bar whenever the bar
-                                // itself sat on dark content. A specular rim
-                                // reads against light AND dark, and unlike
-                                // lightening the wash it leaves the selected
-                                // icon (white by default, drawn on top) legible.
-                                Highlight.Default.copy(
-                                    alpha = lerp(PuckRestHighlightAlpha, 1f, progress)
-                                )
+                                if (glassConfig.style != GlassStyle.BLUR) {
+                                    val progress = dampedDragAnimation.pressProgress
+                                    Highlight.Default.copy(
+                                        alpha = lerp(PuckRestHighlightAlpha, 1f, progress)
+                                    )
+                                } else null
                             },
                             shadow = {
                                 val progress = dampedDragAnimation.pressProgress

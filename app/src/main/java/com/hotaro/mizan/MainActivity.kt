@@ -55,6 +55,7 @@ import androidx.navigation.navArgument
 import com.hotaro.mizan.ui.glass.AttendXFloatingNavBar
 import com.hotaro.mizan.ui.glass.AttendXNavTab
 import com.hotaro.mizan.ui.glass.GlassEffectConfig
+import com.hotaro.mizan.ui.glass.GlassStyle
 import com.hotaro.mizan.ui.glass.LocalAppBackdrop
 import com.hotaro.mizan.ui.glass.LocalGlassEffectConfig
 import com.hotaro.mizan.ui.glass.backdrop.backdrops.LayerBackdrop
@@ -72,6 +73,7 @@ import com.hotaro.mizan.ui.navigation.slideFadeOutToRight
 import com.hotaro.mizan.ui.navigation.slideFadeInFromLeft
 import com.hotaro.mizan.ui.navigation.slideFadeOutToLeft
 import com.hotaro.mizan.ui.screen.ChangelogScreen
+import com.hotaro.mizan.ui.screen.ClockAndTimerScreen
 import com.hotaro.mizan.ui.screen.ElementsAndFeelScreen
 import com.hotaro.mizan.ui.screen.HomeScreen
 import com.hotaro.mizan.ui.screen.QiblaScreen
@@ -97,15 +99,32 @@ class MainActivity : ComponentActivity() {
             val themeMode by themeViewModel.themeMode.collectAsState(initial = 0)
             val colorPalette by themeViewModel.colorPalette.collectAsState(initial = "dynamic")
             val appFont by themeViewModel.appFont.collectAsState(initial = "default")
+            val navBarBlurStyle by themeViewModel.navBarBlurStyle.collectAsState(initial = "glass")
 
-            val glassConfig = remember {
-                GlassEffectConfig(
-                    globalEnabled = true,
-                    vibrancy = 1.25f,
-                    blurRadius = 3f,
-                    surfaceOpacity = 0.50f,
-                    navBarEnabled = true
-                )
+            val glassConfig = remember(navBarBlurStyle) {
+                when (navBarBlurStyle) {
+                    "soft" -> GlassEffectConfig(
+                        globalEnabled = true,
+                        vibrancy = 1.0f,
+                        blurRadius = 6f,
+                        style = GlassStyle.BLUR,
+                        surfaceOpacity = 0.50f,
+                        navBarEnabled = true
+                    )
+                    "none" -> GlassEffectConfig(
+                        globalEnabled = false,
+                        style = GlassStyle.TRANSPARENT,
+                        navBarEnabled = false
+                    )
+                    else -> GlassEffectConfig(
+                        globalEnabled = true,
+                        vibrancy = 1.25f,
+                        blurRadius = 3f,
+                        style = GlassStyle.LIQUID,
+                        surfaceOpacity = 0.50f,
+                        navBarEnabled = true
+                    )
+                }
             }
             val appBackdrop = rememberLayerBackdrop()
 
@@ -353,9 +372,17 @@ fun QuranApp(homeViewModel: HomeViewModel, appBackdrop: LayerBackdrop) {
                                 onElementsAndFeelClick = {
                                     navController.navigate("elements_and_feel")
                                 },
+                                onClockAndTimerClick = {
+                                    navController.navigate("clock_and_timer")
+                                },
                                 onAboutClick = {
                                     navController.navigate("changelog")
                                 }
+                            )
+                        }
+                        composable("clock_and_timer") {
+                            ClockAndTimerScreen(
+                                onBackClick = { navController.popBackStack() }
                             )
                         }
                         composable("elements_and_feel") {

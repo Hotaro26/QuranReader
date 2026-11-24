@@ -33,6 +33,9 @@ class PreferenceManager @Inject constructor(private val context: Context) {
         val MANUAL_MAGHRIB = stringPreferencesKey("manual_maghrib")
         val MANUAL_ISHA = stringPreferencesKey("manual_isha")
         val SELECTED_APP_ICON = stringPreferencesKey("selected_app_icon")
+        val NAV_BAR_BLUR_STYLE = stringPreferencesKey("nav_bar_blur_style")
+        val PRAYER_REMINDER_ENABLED = booleanPreferencesKey("prayer_reminder_enabled")
+        val PRAYER_REMINDER_MINUTES_BEFORE = intPreferencesKey("prayer_reminder_minutes_before")
     }
 
     val lastReadSurah: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -105,6 +108,18 @@ class PreferenceManager @Inject constructor(private val context: Context) {
 
     val selectedAppIcon: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[PreferencesKeys.SELECTED_APP_ICON] ?: "emerald"
+    }
+
+    val navBarBlurStyle: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.NAV_BAR_BLUR_STYLE] ?: "glass"
+    }
+
+    val prayerReminderEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.PRAYER_REMINDER_ENABLED] ?: true
+    }
+
+    val prayerReminderMinutesBefore: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.PRAYER_REMINDER_MINUTES_BEFORE] ?: 10
     }
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
@@ -192,4 +207,21 @@ class PreferenceManager @Inject constructor(private val context: Context) {
         }
     }
 
+    suspend fun saveNavBarBlurStyle(style: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.NAV_BAR_BLUR_STYLE] = style
+        }
+    }
+
+    suspend fun savePrayerReminderEnabled(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.PRAYER_REMINDER_ENABLED] = enabled
+        }
+    }
+
+    suspend fun savePrayerReminderMinutesBefore(minutes: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.PRAYER_REMINDER_MINUTES_BEFORE] = minutes
+        }
+    }
 }

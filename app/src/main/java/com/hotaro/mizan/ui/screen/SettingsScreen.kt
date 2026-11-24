@@ -70,6 +70,7 @@ object SettingsGroupShape {
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
     onElementsAndFeelClick: () -> Unit = {},
+    onClockAndTimerClick: () -> Unit = {},
     onAboutClick: () -> Unit = {}
 ) {
     val themeMode by viewModel.themeMode.collectAsState()
@@ -84,6 +85,8 @@ fun SettingsScreen(
     val manualMaghrib by viewModel.manualMaghrib.collectAsState()
     val manualIsha by viewModel.manualIsha.collectAsState()
     val selectedAppIcon by viewModel.selectedAppIcon.collectAsState()
+    val prayerReminderEnabled by viewModel.prayerReminderEnabled.collectAsState()
+    val prayerReminderMinutesBefore by viewModel.prayerReminderMinutesBefore.collectAsState()
     val editions by viewModel.filteredEditions.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -224,14 +227,18 @@ fun SettingsScreen(
                     )
                 }
                 item {
-                    ExpressiveDropdownSettingItem(
+                    val reminderSummary = if (prayerReminderEnabled) {
+                        if (prayerReminderMinutesBefore == 0) "Reminders at prayer time"
+                        else "Reminders ${prayerReminderMinutesBefore}m before"
+                    } else {
+                        "Reminders off"
+                    }
+                    ExpressiveActionSettingItem(
                         icon = Icons.Default.Schedule,
-                        title = "Clock Format",
-                        subtitle = "Display style for prayer times",
-                        currentValue = if (use24HourFormat) "24-hour" else "12-hour",
-                        options = listOf("12-hour" to false, "24-hour" to true),
+                        title = "Clock and Timer",
+                        subtitle = "${if (use24HourFormat) "24-hour" else "12-hour"} • $reminderSummary",
                         shape = SettingsGroupShape.getShape(4, 6),
-                        onSelected = { viewModel.setUse24HourFormat(it) }
+                        onClick = onClockAndTimerClick
                     )
                 }
                 item {

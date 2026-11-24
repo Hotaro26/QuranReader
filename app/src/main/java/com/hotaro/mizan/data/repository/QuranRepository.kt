@@ -134,6 +134,9 @@ class QuranRepository @Inject constructor(
     val manualMaghrib = preferenceManager.manualMaghrib
     val manualIsha = preferenceManager.manualIsha
     val selectedAppIcon = preferenceManager.selectedAppIcon
+    val navBarBlurStyle = preferenceManager.navBarBlurStyle
+    val prayerReminderEnabled = preferenceManager.prayerReminderEnabled
+    val prayerReminderMinutesBefore = preferenceManager.prayerReminderMinutesBefore
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
         preferenceManager.saveLastRead(surah, ayah)
@@ -185,6 +188,18 @@ class QuranRepository @Inject constructor(
 
     suspend fun saveSelectedAppIcon(icon: String) {
         preferenceManager.saveSelectedAppIcon(icon)
+    }
+
+    suspend fun saveNavBarBlurStyle(style: String) {
+        preferenceManager.saveNavBarBlurStyle(style)
+    }
+
+    suspend fun savePrayerReminderEnabled(enabled: Boolean) {
+        preferenceManager.savePrayerReminderEnabled(enabled)
+    }
+
+    suspend fun savePrayerReminderMinutesBefore(minutes: Int) {
+        preferenceManager.savePrayerReminderMinutesBefore(minutes)
     }
 
     // Surah List

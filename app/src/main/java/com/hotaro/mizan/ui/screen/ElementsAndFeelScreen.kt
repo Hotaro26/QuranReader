@@ -1,5 +1,6 @@
 package com.hotaro.mizan.ui.screen
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -7,6 +8,10 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.BlurCircular
+import androidx.compose.material.icons.filled.BlurOff
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.TouchApp
@@ -31,6 +36,7 @@ fun ElementsAndFeelScreen(
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val showContinuePill by viewModel.showContinuePill.collectAsState()
+    val navBarBlurStyle by viewModel.navBarBlurStyle.collectAsState()
     var isRefreshing by remember { mutableStateOf(false) }
     val navBarPadding = LocalFloatingNavBarPadding.current
 
@@ -153,7 +159,7 @@ fun ElementsAndFeelScreen(
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = SettingsGroupShape.FIRST,
+                        shape = SettingsGroupShape.SINGLE,
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                         ),
@@ -201,10 +207,39 @@ fun ElementsAndFeelScreen(
                     }
                 }
 
+                // Section: Floating Bottom Navigation Bar
                 item {
+                    Spacer(Modifier.height(8.dp))
+                    SettingsSectionHeader("Floating Bottom Navigation Bar")
+                }
+
+                val blurOptions = listOf(
+                    Triple(
+                        "glass",
+                        "Glass Blur (Default)" to "Dynamic liquid refraction, specular highlight & depth",
+                        Icons.Default.AutoAwesome
+                    ),
+                    Triple(
+                        "soft",
+                        "Soft Blur" to "Clean frosted blur backdrop without liquid refraction",
+                        Icons.Default.BlurCircular
+                    ),
+                    Triple(
+                        "none",
+                        "No Blur" to "Solid themed surface with high contrast, blur-free",
+                        Icons.Default.BlurOff
+                    )
+                )
+
+                items(blurOptions.size) { index ->
+                    val (key, textPair, icon) = blurOptions[index]
+                    val (title, subtitle) = textPair
+                    val isSelected = navBarBlurStyle == key
+                    val shape = SettingsGroupShape.getShape(index, blurOptions.size)
+
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = SettingsGroupShape.LAST,
+                        shape = shape,
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                         ),
@@ -213,18 +248,27 @@ fun ElementsAndFeelScreen(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clickable { viewModel.setNavBarBlurStyle(key) }
                                 .padding(horizontal = 20.dp, vertical = 18.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Surface(
                                 shape = CircleShape,
-                                color = MaterialTheme.colorScheme.tertiaryContainer,
-                                contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                                color = if (isSelected) {
+                                    MaterialTheme.colorScheme.primaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerHighest
+                                },
+                                contentColor = if (isSelected) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
                                 modifier = Modifier.size(40.dp)
                             ) {
                                 Box(contentAlignment = Alignment.Center) {
                                     Icon(
-                                        Icons.Default.Tune,
+                                        icon,
                                         contentDescription = null,
                                         modifier = Modifier.size(20.dp)
                                     )
@@ -233,15 +277,38 @@ fun ElementsAndFeelScreen(
                             Spacer(Modifier.width(16.dp))
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
-                                    "More customizers",
+                                    title,
                                     style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
                                 )
                                 Spacer(Modifier.height(2.dp))
                                 Text(
-                                    "Additional card, pill & glass options in upcoming updates",
+                                    subtitle,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Spacer(Modifier.width(8.dp))
+                            if (isSelected) {
+                                Surface(
+                                    shape = CircleShape,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(24.dp)
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            Icons.Default.Check,
+                                            contentDescription = "Selected",
+                                            tint = MaterialTheme.colorScheme.onPrimary,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                }
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .border(2.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
                                 )
                             }
                         }

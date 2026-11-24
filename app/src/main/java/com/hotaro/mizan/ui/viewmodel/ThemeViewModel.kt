@@ -30,4 +30,10 @@ class ThemeViewModel @Inject constructor(
         SharingStarted.WhileSubscribed(5000),
         "default"
     )
+
+    val navBarBlurStyle = repository.navBarBlurStyle.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        "glass"
+    )
 }

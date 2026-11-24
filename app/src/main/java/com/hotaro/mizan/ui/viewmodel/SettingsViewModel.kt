@@ -48,6 +48,27 @@ class SettingsViewModel @Inject constructor(
     val manualMaghrib = repository.manualMaghrib.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "18:30")
     val manualIsha = repository.manualIsha.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "20:00")
     val selectedAppIcon = repository.selectedAppIcon.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "emerald")
+    val navBarBlurStyle = repository.navBarBlurStyle.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "glass")
+    val prayerReminderEnabled = repository.prayerReminderEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    val prayerReminderMinutesBefore = repository.prayerReminderMinutesBefore.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 10)
+
+    fun setPrayerReminderEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.savePrayerReminderEnabled(enabled)
+        }
+    }
+
+    fun setPrayerReminderMinutesBefore(minutes: Int) {
+        viewModelScope.launch {
+            repository.savePrayerReminderMinutesBefore(minutes)
+        }
+    }
+
+    fun setNavBarBlurStyle(style: String) {
+        viewModelScope.launch {
+            repository.saveNavBarBlurStyle(style)
+        }
+    }
 
     fun setAppIcon(context: Context, icon: String) {
         viewModelScope.launch {
