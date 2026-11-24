@@ -265,8 +265,9 @@ fun FloatingTabBar(
         // Held as a lambda rather than a Boolean so flipping it costs no
         // recomposition â€” the glass surfaces call it during draw. See
         // LocalTabBarBackdropFrozen.
+        // Keep it unfrozen so the blur shader never abruptly snaps or freezes during fold/unfold.
         val frozenWhileAnimating = remember(transition) {
-            { transition.currentState != transition.targetState }
+            { false }
         }
         CompositionLocalProvider(LocalTabBarBackdropFrozen provides frozenWhileAnimating) {
             Box {
@@ -289,7 +290,9 @@ fun FloatingTabBar(
                     sizes = sizes,
                     elevations = elevations,
                     tabBarContentModifier = tabBarContentModifier,
-                    animatedVisibilityScope = this@AnimatedContent
+                    animatedVisibilityScope = this@AnimatedContent,
+                    backdrop = backdrop,
+                    accentColor = accentColor
                 )
                 FloatingTabBarVisual.EXPANDED -> ExpandedBar(
                     scope = scope,
@@ -544,7 +547,9 @@ private fun SharedTransitionScope.InlineBar(
     sizes: FloatingTabBarSizes,
     elevations: FloatingTabBarElevations,
     tabBarContentModifier: Modifier,
-    animatedVisibilityScope: AnimatedVisibilityScope
+    animatedVisibilityScope: AnimatedVisibilityScope,
+    backdrop: Backdrop? = null,
+    accentColor: Color? = null,
 ) {
     val inlineTab = scope.getInlineTab(selectedTabKey)
     val standaloneTab = scope.standaloneTab
@@ -570,6 +575,8 @@ private fun SharedTransitionScope.InlineBar(
                 elevations = elevations,
                 animatedVisibilityScope = animatedVisibilityScope,
                 tabBarContentModifier = tabBarContentModifier,
+                backdrop = backdrop,
+                accentColor = accentColor,
                 modifier = Modifier
             )
         }
@@ -625,7 +632,9 @@ private fun SharedTransitionScope.InlineTab(
     elevations: FloatingTabBarElevations,
     animatedVisibilityScope: AnimatedVisibilityScope,
     modifier: Modifier,
-    tabBarContentModifier: Modifier
+    tabBarContentModifier: Modifier,
+    backdrop: Backdrop? = null,
+    accentColor: Color? = null,
 ) {
     val glassConfig = LocalGlassEffectConfig.current
     val puckWash = if (glassConfig.puckColor.isSpecified) {
@@ -661,7 +670,7 @@ private fun SharedTransitionScope.InlineTab(
             )
             .padding(sizes.tabInlineContentPadding)
     ) {
-        // Morphing active tab highlight pill (seamlessly morphs with ExpandedTabs active tab)
+        // Morphing active tab highlight pill with frosted glass blur
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -670,11 +679,36 @@ private fun SharedTransitionScope.InlineTab(
                     animatedVisibilityScope = animatedVisibilityScope,
                     zIndexInOverlay = 0.5f
                 )
-                .background(
-                    color = puckWash.copy(alpha = puckRestAlpha),
-                    shape = shapes.tabShape
+                .then(
+                    if (backdrop != null) {
+                        Modifier.drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { shapes.tabShape },
+                            effects = {
+                                blur(3f.dp.toPx())
+                            },
+                            highlight = {
+                                Highlight.Default.copy(alpha = PuckRestHighlightAlpha)
+                            },
+                            shadow = {
+                                Shadow(alpha = PuckRestShadowAlpha)
+                            },
+                            innerShadow = {
+                                InnerShadow(radius = 4f.dp, alpha = 0.4f)
+                            },
+                            onDrawSurface = {
+                                drawRect(puckWash.copy(alpha = puckRestAlpha))
+                            }
+                        )
+                    } else {
+                        Modifier
+                            .background(
+                                color = puckWash.copy(alpha = puckRestAlpha),
+                                shape = shapes.tabShape
+                            )
+                            .clip(shapes.tabShape)
+                    }
                 )
-                .clip(shapes.tabShape)
         )
 
         Tab(
@@ -1332,11 +1366,36 @@ private fun SharedTransitionScope.ExpandedTabs(
                                     animatedVisibilityScope = animatedVisibilityScope,
                                     zIndexInOverlay = 0.5f
                                 )
-                                .background(
-                                    color = puckWash.copy(alpha = puckRestAlpha),
-                                    shape = shapes.tabShape
+                                .then(
+                                    if (backdrop != null) {
+                                        Modifier.drawBackdrop(
+                                            backdrop = backdrop,
+                                            shape = { shapes.tabShape },
+                                            effects = {
+                                                blur(3f.dp.toPx())
+                                            },
+                                            highlight = {
+                                                Highlight.Default.copy(alpha = PuckRestHighlightAlpha)
+                                            },
+                                            shadow = {
+                                                Shadow(alpha = PuckRestShadowAlpha)
+                                            },
+                                            innerShadow = {
+                                                InnerShadow(radius = 4f.dp, alpha = 0.4f)
+                                            },
+                                            onDrawSurface = {
+                                                drawRect(puckWash.copy(alpha = puckRestAlpha))
+                                            }
+                                        )
+                                    } else {
+                                        Modifier
+                                            .background(
+                                                color = puckWash.copy(alpha = puckRestAlpha),
+                                                shape = shapes.tabShape
+                                            )
+                                            .clip(shapes.tabShape)
+                                    }
                                 )
-                                .clip(shapes.tabShape)
                         )
                     }
 
@@ -1499,6 +1558,8 @@ private fun SharedTransitionScope.ExpandedTabs(
                     translationX =
                         if (isLtr) dampedDragAnimation.value * tabWidthPx + panelOffset
                         else size.width - (dampedDragAnimation.value + 1f) * tabWidthPx + panelOffset
+                    // ActiveTabHighlightPill handles rest & fold transitions; draggable layer fades in during live finger drag
+                    alpha = dampedDragAnimation.pressProgress
                 }
                 .then(interactiveHighlight.gestureModifier)
                 .then(dampedDragAnimation.modifier)
@@ -1632,14 +1693,8 @@ private fun SharedTransitionScope.ExpandedTabs(
                         else size.width - (dampedDragAnimation.value + 1f) * tabWidthPx + panelOffset
                     scaleX = dampedDragAnimation.scaleX
                     scaleY = dampedDragAnimation.scaleY
-                    // Settled state only for glass mode (where the glass backdrop row refracts).
-                    // In fallback mode (opaque puck), keep alpha at 1f so the selected icon
-                    // and title remain visible on top of the moving puck during drag.
-                    alpha = if (backdrop != null) {
-                        (1f - dampedDragAnimation.pressProgress * 3f).fastCoerceIn(0f, 1f)
-                    } else {
-                        1f
-                    }
+                    // Row icons are already rendered and tracked by sharedElement; only show overlay during finger drag
+                    alpha = dampedDragAnimation.pressProgress
                 }
                 .width(sizes.tabWidth)
                 .fillMaxHeight()
