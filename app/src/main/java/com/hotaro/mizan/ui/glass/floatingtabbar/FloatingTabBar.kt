@@ -39,6 +39,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -271,8 +272,8 @@ fun FloatingTabBar(
             Box {
                 transition.AnimatedContent(
                     transitionSpec = {
-                        fadeIn(tween(220, easing = FastOutSlowInEasing)) togetherWith
-                            fadeOut(tween(180, easing = FastOutSlowInEasing))
+                        fadeIn(tween(280, easing = FastOutSlowInEasing)) togetherWith
+                            fadeOut(tween(200, easing = FastOutSlowInEasing))
                     },
                     contentAlignment = Alignment.BottomCenter
                 ) { targetVisual ->
@@ -626,12 +627,20 @@ private fun SharedTransitionScope.InlineTab(
     modifier: Modifier,
     tabBarContentModifier: Modifier
 ) {
+    val glassConfig = LocalGlassEffectConfig.current
+    val puckWash = if (glassConfig.puckColor.isSpecified) {
+        glassConfig.puckColor
+    } else {
+        MaterialTheme.colorScheme.secondaryContainer
+    }
+    val puckRestAlpha = glassConfig.puckOpacity.coerceIn(0f, 1f)
+
     Box(
         modifier = modifier
             .sharedElement(
                 sharedContentState = rememberSharedContentState("tabGroup"),
                 animatedVisibilityScope = animatedVisibilityScope,
-                zIndexInOverlay = 1f
+                zIndexInOverlay = 0.1f
             )
             .shadow(
                 shape = shapes.tabBarShape,
@@ -652,6 +661,22 @@ private fun SharedTransitionScope.InlineTab(
             )
             .padding(sizes.tabInlineContentPadding)
     ) {
+        // Morphing active tab highlight pill (seamlessly morphs with ExpandedTabs active tab)
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .sharedElement(
+                    sharedContentState = rememberSharedContentState("activeTabHighlightPill"),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    zIndexInOverlay = 0.5f
+                )
+                .background(
+                    color = puckWash.copy(alpha = puckRestAlpha),
+                    shape = shapes.tabShape
+                )
+                .clip(shapes.tabShape)
+        )
+
         Tab(
             icon = {
                 Box(
@@ -1268,7 +1293,7 @@ private fun SharedTransitionScope.ExpandedTabs(
                 .sharedElement(
                     sharedContentState = rememberSharedContentState("tabGroup"),
                     animatedVisibilityScope = animatedVisibilityScope,
-                    zIndexInOverlay = 1f
+                    zIndexInOverlay = 0.1f
                 )
                 .shadow(
                     shape = shapes.tabBarShape,
@@ -1285,61 +1310,89 @@ private fun SharedTransitionScope.ExpandedTabs(
             horizontalArrangement = Arrangement.spacedBy(sizes.tabSpacing)
         ) {
             allTabs.forEachIndexed { index, tab ->
-                Tab(
-                    icon = {
-                        Box(
-                            modifier = Modifier
-                                .graphicsLayer {
-                                    // Unselected tabs sit back; the selected one is
-                                    // never dimmed, so the puck must not darken it.
-                                    alpha = if (tab.key == selectedTabKey) 1f else 0.6f
-                                }
-                                .then(
-                                    if (tab.key == selectedTabKey) {
-                                        Modifier.sharedElement(
-                                            sharedContentState = rememberSharedContentState("tab#${tab.key}-icon"),
-                                            animatedVisibilityScope = animatedVisibilityScope,
-                                            zIndexInOverlay = 1f
-                                        )
-                                    } else {
-                                        Modifier.animateEnterExitTab(
-                                            sharedTransitionScope = this@ExpandedTabs,
-                                            animatedVisibilityScope = animatedVisibilityScope
-                                        )
-                                    }
-                                )
-                        ) {
-                            tab.icon()
-                        }
-                    },
-                    title = {
-                        Box(
-                            Modifier.animateEnterExitTab(
-                                sharedTransitionScope = this@ExpandedTabs,
-                                animatedVisibilityScope = animatedVisibilityScope
-                            )
-                        ) {
-                            tab.title()
-                        }
-                    },
-                    isInline = false,
-                    isStandalone = false,
-                    contentScale = if (index == currentIndex) {
-                        lerp(1f, 1.12f, dampedDragAnimation.pressProgress)
-                    } else {
-                        1f
-                    },
+                val isSelected = tab.key == selectedTabKey
+                val tabAlpha by animateFloatAsState(
+                    targetValue = if (isSelected) 1f else 0.6f,
+                    animationSpec = tween(durationMillis = 250),
+                    label = "tabAlpha_$index"
+                )
+
+                Box(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxHeight()
-                        .skipToLookaheadSize()
-                        .clip(shapes.tabShape)
-                        .tapClickable(
-                            indication = tab.indication?.invoke(),
-                            onClick = tab.onClick
+                        .fillMaxHeight(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .sharedElement(
+                                    sharedContentState = rememberSharedContentState("activeTabHighlightPill"),
+                                    animatedVisibilityScope = animatedVisibilityScope,
+                                    zIndexInOverlay = 0.5f
+                                )
+                                .background(
+                                    color = puckWash.copy(alpha = puckRestAlpha),
+                                    shape = shapes.tabShape
+                                )
+                                .clip(shapes.tabShape)
                         )
-                        .padding(sizes.tabExpandedContentPadding)
-                )
+                    }
+
+                    Tab(
+                        icon = {
+                            Box(
+                                modifier = Modifier
+                                    .graphicsLayer {
+                                        alpha = tabAlpha
+                                    }
+                                    .then(
+                                        if (isSelected) {
+                                            Modifier.sharedElement(
+                                                sharedContentState = rememberSharedContentState("tab#${tab.key}-icon"),
+                                                animatedVisibilityScope = animatedVisibilityScope,
+                                                zIndexInOverlay = 1f
+                                            )
+                                        } else {
+                                            Modifier.animateEnterExitTab(
+                                                sharedTransitionScope = this@ExpandedTabs,
+                                                animatedVisibilityScope = animatedVisibilityScope
+                                            )
+                                        }
+                                    )
+                            ) {
+                                tab.icon()
+                            }
+                        },
+                        title = {
+                            Box(
+                                Modifier.animateEnterExitTab(
+                                    sharedTransitionScope = this@ExpandedTabs,
+                                    animatedVisibilityScope = animatedVisibilityScope
+                                )
+                            ) {
+                                tab.title()
+                            }
+                        },
+                        isInline = false,
+                        isStandalone = false,
+                        contentScale = if (index == currentIndex) {
+                            lerp(1f, 1.12f, dampedDragAnimation.pressProgress)
+                        } else {
+                            1f
+                        },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .skipToLookaheadSize()
+                            .clip(shapes.tabShape)
+                            .tapClickable(
+                                indication = tab.indication?.invoke(),
+                                onClick = tab.onClick
+                            )
+                            .padding(sizes.tabExpandedContentPadding)
+                    )
+                }
             }
         }
 
@@ -1688,7 +1741,7 @@ private fun Modifier.animateEnterExitAccessory(
 }
 
 /**
- * A custom modifier that provides smooth enter/exit animations with fade and blur effects.
+ * A custom modifier that provides smooth, morphing enter/exit animations without abrupt pops.
  */
 @Composable
 private fun Modifier.animateEnterExitTab(
@@ -1696,20 +1749,15 @@ private fun Modifier.animateEnterExitTab(
     animatedVisibilityScope: AnimatedVisibilityScope
 ): Modifier = with(sharedTransitionScope) {
     with(animatedVisibilityScope) {
-        val enterStartFraction = 0.5f
-        val enterEndFraction = 0.8f
-        val durationMs = 150
-
         val animatedAlpha by transition.animateFloat(
             transitionSpec = {
-                keyframes {
-                    durationMillis = durationMs
-                    if (targetState == EnterExitState.Visible) {
-                        0f atFraction enterStartFraction using FastOutSlowInEasing
-                        1f atFraction enterEndFraction
-                    }
+                if (targetState == EnterExitState.Visible) {
+                    tween(durationMillis = 240, delayMillis = 60, easing = FastOutSlowInEasing)
+                } else {
+                    tween(durationMillis = 180, easing = FastOutSlowInEasing)
                 }
-            }
+            },
+            label = "tabEnterExitAlpha"
         ) { targetState ->
             when (targetState) {
                 EnterExitState.Visible -> 1f
@@ -1717,30 +1765,26 @@ private fun Modifier.animateEnterExitTab(
             }
         }
 
-        val blurRadius = with(LocalDensity.current) { 50.dp.toPx() }
-        val animatedBlur by transition.animateFloat(
+        val animatedScale by transition.animateFloat(
             transitionSpec = {
-                keyframes {
-                    durationMillis = durationMs
-                    if (targetState == EnterExitState.Visible) {
-                        blurRadius atFraction enterStartFraction using FastOutSlowInEasing
-                        0f atFraction enterEndFraction
-                    }
+                if (targetState == EnterExitState.Visible) {
+                    spring(dampingRatio = 0.85f, stiffness = 380f)
+                } else {
+                    tween(durationMillis = 180, easing = FastOutSlowInEasing)
                 }
-            }
+            },
+            label = "tabEnterExitScale"
         ) { targetState ->
             when (targetState) {
-                EnterExitState.Visible -> 0f
-                else -> blurRadius
+                EnterExitState.Visible -> 1f
+                else -> 0.82f
             }
         }
 
         graphicsLayer {
             alpha = animatedAlpha
-            renderEffect = BlurEffect(
-                radiusX = animatedBlur,
-                radiusY = animatedBlur
-            )
+            scaleX = animatedScale
+            scaleY = animatedScale
         }
     }
 }

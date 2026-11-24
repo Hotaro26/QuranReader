@@ -121,19 +121,29 @@ fun AttendXFloatingNavBar(
                 tab(
                     key = index,
                     title = {
+                        val itemColor by animateColorAsState(
+                            targetValue = if (isSelected) selectedContentColor else unselectedContentColor,
+                            animationSpec = androidx.compose.animation.core.tween(durationMillis = 250),
+                            label = "tabTitleColor_$index"
+                        )
                         Text(
                             text = tabDef.label,
-                            color = if (isSelected) selectedContentColor else unselectedContentColor,
+                            color = itemColor,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             fontSize = 10.sp,
                         )
                     },
                     icon = {
+                        val itemColor by animateColorAsState(
+                            targetValue = if (isSelected) selectedContentColor else unselectedContentColor,
+                            animationSpec = androidx.compose.animation.core.tween(durationMillis = 250),
+                            label = "tabIconColor_$index"
+                        )
                         Icon(
                             imageVector = if (isSelected) tabDef.selectedIcon else tabDef.unselectedIcon,
                             contentDescription = tabDef.label,
-                            tint = if (isSelected) selectedContentColor else unselectedContentColor,
+                            tint = itemColor,
                             modifier = Modifier.size(24.dp),
                         )
                     },
