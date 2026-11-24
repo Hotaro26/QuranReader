@@ -14,8 +14,8 @@ android {
         applicationId = "com.hotaro.mizan"
         minSdk = 30
         targetSdk = 36
-        versionCode = 6
-        versionName = "2.1"
+        versionCode = 7
+        versionName = "2.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

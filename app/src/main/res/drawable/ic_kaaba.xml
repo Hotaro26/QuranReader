@@ -1,0 +1,30 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Golden Rim Frame -->
+    <path
+        android:fillColor="#E5C158"
+        android:pathData="M3,3h18v18h-18z" />
+    <!-- Kaaba Cube Base (Black Kiswah) -->
+    <path
+        android:fillColor="#141416"
+        android:pathData="M4.5,4.5h15v15h-15z" />
+    <!-- Roof Tile / Marble Border -->
+    <path
+        android:fillColor="#403F44"
+        android:pathData="M4.5,4.5h15v2h-15z" />
+    <!-- Golden Kiswah Belt (Hizam) -->
+    <path
+        android:fillColor="#F6D56D"
+        android:pathData="M4.5,8h15v2.2h-15z" />
+    <!-- Golden Door (Bab ar-Rahman) -->
+    <path
+        android:fillColor="#F6D56D"
+        android:pathData="M13.5,12.5h4.5v7h-4.5z" />
+    <!-- Door Frame Detail -->
+    <path
+        android:fillColor="#D8A826"
+        android:pathData="M14.5,13.5h2.5v5h-2.5z" />
+</vector>
