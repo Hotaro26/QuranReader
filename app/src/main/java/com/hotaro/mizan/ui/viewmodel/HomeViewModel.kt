@@ -15,6 +15,7 @@ import com.hotaro.mizan.data.model.PrayerTime
 import com.hotaro.mizan.data.model.PrayerTimeProvider
 import com.hotaro.mizan.data.model.Surah
 import com.hotaro.mizan.data.repository.QuranRepository
+import com.hotaro.mizan.reminder.PrayerReminderManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
@@ -50,7 +51,7 @@ class HomeViewModel @Inject constructor(
     private val _cityName = MutableStateFlow("")
     private val _weatherTemp = MutableStateFlow<Double?>(null)
 
-    val showContinuePill = repository.showContinuePill.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    val showContinuePill = repository.showContinuePill.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing = _isRefreshing.asStateFlow()
@@ -80,6 +81,7 @@ class HomeViewModel @Inject constructor(
     init {
         updateTime()
         observeManualPrayerTimes()
+        PrayerReminderManager.scheduleReminders(context)
     }
 
     private fun observeManualPrayerTimes() {
@@ -178,6 +180,14 @@ class HomeViewModel @Inject constructor(
                             )
                             val use24Hour = repository.use24HourFormat.first()
                             _prayerTimes.value = PrayerTimeProvider.formatPrayerTimes(rawTimes, use24Hour)
+                            repository.saveCachedPrayerTimes(
+                                timings.Fajr,
+                                timings.Dhuhr,
+                                timings.Asr,
+                                timings.Maghrib,
+                                timings.Isha
+                            )
+                            PrayerReminderManager.scheduleReminders(context)
                         }
                     }
                 }

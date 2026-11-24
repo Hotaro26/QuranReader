@@ -11,13 +11,22 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -43,6 +52,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -54,6 +64,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.hotaro.mizan.reminder.PrayerReminderManager
 import com.hotaro.mizan.ui.glass.AttendXFloatingNavBar
 import com.hotaro.mizan.ui.glass.AttendXNavTab
 import com.hotaro.mizan.ui.glass.GlassEffectConfig
@@ -97,6 +108,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+        PrayerReminderManager.createNotificationChannel(this)
+        PrayerReminderManager.scheduleReminders(this)
         enableEdgeToEdge()
         setContent {
             val themeViewModel: ThemeViewModel = hiltViewModel()
@@ -154,7 +167,7 @@ class MainActivity : ComponentActivity() {
                         QuranApp(
                             homeViewModel = hiltViewModel(),
                             appBackdrop = appBackdrop,
-                            initialOnboardingCompleted = currentConfig.hasCompletedOnboarding
+                            initialConfig = currentConfig
                         )
                     }
                 }
@@ -167,10 +180,13 @@ class MainActivity : ComponentActivity() {
 fun QuranApp(
     homeViewModel: HomeViewModel,
     appBackdrop: LayerBackdrop,
-    initialOnboardingCompleted: Boolean,
+    initialConfig: com.hotaro.mizan.ui.viewmodel.AppThemeConfig,
+    themeViewModel: ThemeViewModel = hiltViewModel(),
     onboardingViewModel: OnboardingViewModel = hiltViewModel()
 ) {
-    val hasCompletedOnboarding by onboardingViewModel.hasCompleted.collectAsState(initial = initialOnboardingCompleted)
+    val hasCompletedOnboarding by onboardingViewModel.hasCompleted.collectAsState(initial = initialConfig.hasCompletedOnboarding)
+    val windowAnimationStyle by themeViewModel.windowAnimationStyle.collectAsState(initial = initialConfig.windowAnimationStyle)
+    val useClassicNavBar by themeViewModel.useClassicNavBar.collectAsState(initial = initialConfig.useClassicNavBar)
 
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -205,9 +221,9 @@ fun QuranApp(
     var navBarOccupiedPx by remember { mutableFloatStateOf(0f) }
     val measuredNavBarPadding = with(density) { navBarOccupiedPx.toDp() }
     val navBarBottomPadding = if (measuredNavBarPadding > 0.dp) {
-        measuredNavBarPadding + 20.dp
+        if (useClassicNavBar) measuredNavBarPadding + 8.dp else measuredNavBarPadding + 20.dp
     } else {
-        120.dp
+        if (useClassicNavBar) 90.dp else 120.dp
     }
 
     CompositionLocalProvider(LocalFloatingNavBarPadding provides navBarBottomPadding) {
@@ -258,7 +274,7 @@ fun QuranApp(
                         .fillMaxSize()
                         .graphicsLayer()
                         .then(
-                            if (isGlassAllowed()) {
+                            if (isGlassAllowed() && !useClassicNavBar) {
                                 Modifier.layerBackdrop(
                                     appBackdrop,
                                     frozen = backdropFreeze.frozen
@@ -274,51 +290,99 @@ fun QuranApp(
                         startDestination = if (hasCompletedOnboarding == false) "onboarding" else "home",
                         modifier = Modifier.fillMaxSize(),
                         enterTransition = {
-                            val initialRoute = initialState.destination.route
-                            val targetRoute = targetState.destination.route
-                            val initialIndex = tabRoutes.indexOf(initialRoute)
-                            val targetIndex = tabRoutes.indexOf(targetRoute)
-
-                            if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
-                                if (targetIndex > initialIndex) sharedAxisXEnter() else sharedAxisXPopEnter()
-                            } else {
-                                slideFadeInFromRight()
+                            when (windowAnimationStyle) {
+                                "pop" -> scaleIn(
+                                    initialScale = 0.82f,
+                                    animationSpec = spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMediumLow)
+                                ) + fadeIn(tween(250, easing = FastOutSlowInEasing))
+                                "fade" -> fadeIn(tween(280, easing = FastOutSlowInEasing))
+                                "slide_up" -> slideInVertically(
+                                    initialOffsetY = { (it * 0.18f).toInt() },
+                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                ) + fadeIn(tween(250, easing = FastOutSlowInEasing))
+                                else -> {
+                                    val initialRoute = initialState.destination.route
+                                    val targetRoute = targetState.destination.route
+                                    val initialIndex = tabRoutes.indexOf(initialRoute)
+                                    val targetIndex = tabRoutes.indexOf(targetRoute)
+                                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                                        if (targetIndex > initialIndex) sharedAxisXEnter() else sharedAxisXPopEnter()
+                                    } else {
+                                        slideFadeInFromRight()
+                                    }
+                                }
                             }
                         },
                         exitTransition = {
-                            val initialRoute = initialState.destination.route
-                            val targetRoute = targetState.destination.route
-                            val initialIndex = tabRoutes.indexOf(initialRoute)
-                            val targetIndex = tabRoutes.indexOf(targetRoute)
-
-                            if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
-                                if (targetIndex > initialIndex) sharedAxisXExit() else sharedAxisXPopExit()
-                            } else {
-                                slideFadeOutToLeft()
+                            when (windowAnimationStyle) {
+                                "pop" -> scaleOut(
+                                    targetScale = 1.12f,
+                                    animationSpec = tween(200, easing = FastOutSlowInEasing)
+                                ) + fadeOut(tween(180, easing = FastOutSlowInEasing))
+                                "fade" -> fadeOut(tween(200, easing = FastOutSlowInEasing))
+                                "slide_up" -> slideOutVertically(
+                                    targetOffsetY = { -(it * 0.10f).toInt() },
+                                    animationSpec = tween(220, easing = FastOutSlowInEasing)
+                                ) + fadeOut(tween(200, easing = FastOutSlowInEasing))
+                                else -> {
+                                    val initialRoute = initialState.destination.route
+                                    val targetRoute = targetState.destination.route
+                                    val initialIndex = tabRoutes.indexOf(initialRoute)
+                                    val targetIndex = tabRoutes.indexOf(targetRoute)
+                                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                                        if (targetIndex > initialIndex) sharedAxisXExit() else sharedAxisXPopExit()
+                                    } else {
+                                        slideFadeOutToLeft()
+                                    }
+                                }
                             }
                         },
                         popEnterTransition = {
-                            val initialRoute = initialState.destination.route
-                            val targetRoute = targetState.destination.route
-                            val initialIndex = tabRoutes.indexOf(initialRoute)
-                            val targetIndex = tabRoutes.indexOf(targetRoute)
-
-                            if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
-                                if (targetIndex > initialIndex) sharedAxisXEnter() else sharedAxisXPopEnter()
-                            } else {
-                                slideFadeInFromLeft()
+                            when (windowAnimationStyle) {
+                                "pop" -> scaleIn(
+                                    initialScale = 1.12f,
+                                    animationSpec = spring(dampingRatio = 0.75f, stiffness = Spring.StiffnessMediumLow)
+                                ) + fadeIn(tween(250, easing = FastOutSlowInEasing))
+                                "fade" -> fadeIn(tween(280, easing = FastOutSlowInEasing))
+                                "slide_up" -> slideInVertically(
+                                    initialOffsetY = { -(it * 0.10f).toInt() },
+                                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                                ) + fadeIn(tween(250, easing = FastOutSlowInEasing))
+                                else -> {
+                                    val initialRoute = initialState.destination.route
+                                    val targetRoute = targetState.destination.route
+                                    val initialIndex = tabRoutes.indexOf(initialRoute)
+                                    val targetIndex = tabRoutes.indexOf(targetRoute)
+                                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                                        if (targetIndex > initialIndex) sharedAxisXEnter() else sharedAxisXPopEnter()
+                                    } else {
+                                        slideFadeInFromLeft()
+                                    }
+                                }
                             }
                         },
                         popExitTransition = {
-                            val initialRoute = initialState.destination.route
-                            val targetRoute = targetState.destination.route
-                            val initialIndex = tabRoutes.indexOf(initialRoute)
-                            val targetIndex = tabRoutes.indexOf(targetRoute)
-
-                            if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
-                                if (targetIndex > initialIndex) sharedAxisXExit() else sharedAxisXPopExit()
-                            } else {
-                                slideFadeOutToRight()
+                            when (windowAnimationStyle) {
+                                "pop" -> scaleOut(
+                                    targetScale = 0.82f,
+                                    animationSpec = tween(200, easing = FastOutSlowInEasing)
+                                ) + fadeOut(tween(180, easing = FastOutSlowInEasing))
+                                "fade" -> fadeOut(tween(200, easing = FastOutSlowInEasing))
+                                "slide_up" -> slideOutVertically(
+                                    targetOffsetY = { (it * 0.18f).toInt() },
+                                    animationSpec = tween(220, easing = FastOutSlowInEasing)
+                                ) + fadeOut(tween(200, easing = FastOutSlowInEasing))
+                                else -> {
+                                    val initialRoute = initialState.destination.route
+                                    val targetRoute = targetState.destination.route
+                                    val initialIndex = tabRoutes.indexOf(initialRoute)
+                                    val targetIndex = tabRoutes.indexOf(targetRoute)
+                                    if (initialIndex != -1 && targetIndex != -1 && initialIndex != targetIndex) {
+                                        if (targetIndex > initialIndex) sharedAxisXExit() else sharedAxisXPopExit()
+                                    } else {
+                                        slideFadeOutToRight()
+                                    }
+                                }
                             }
                         }
                     ) {
@@ -414,36 +478,84 @@ fun QuranApp(
                     }
                 }
 
-                // AttendX Liquid Glass Bottom Navigation Bar elevated above system navigation gesture pill
+                // Bottom Navigation Bar: Classic Docked or Floating Liquid Glass
                 if (!isWideScreen && showNavBar) {
-                    AttendXFloatingNavBar(
-                        tabs = navTabs,
-                        selectedIndex = selectedTabIndex,
-                        onTabSelected = { index ->
-                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
-                            val targetRoute = tabRoutes[index]
-                            if (targetRoute == "home") {
-                                homeViewModel.triggerHomeAnimation()
-                            }
-                            navController.navigate(targetRoute) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
+                    if (useClassicNavBar) {
+                        NavigationBar(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            tonalElevation = 4.dp,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .onSizeChanged { size ->
+                                    if (size.height > navBarOccupiedPx) {
+                                        navBarOccupiedPx = size.height.toFloat()
+                                    }
                                 }
-                                launchSingleTop = true
-                                restoreState = true
+                        ) {
+                            navTabs.forEachIndexed { index, tab ->
+                                val isSelected = selectedTabIndex == index
+                                NavigationBarItem(
+                                    selected = isSelected,
+                                    onClick = {
+                                        view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                        val targetRoute = tabRoutes[index]
+                                        if (targetRoute == "home") {
+                                            homeViewModel.triggerHomeAnimation()
+                                        }
+                                        navController.navigate(targetRoute) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    },
+                                    icon = {
+                                        Icon(
+                                            imageVector = if (isSelected) tab.selectedIcon else tab.unselectedIcon,
+                                            contentDescription = tab.label
+                                        )
+                                    },
+                                    label = {
+                                        Text(
+                                            tab.label,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                )
                             }
-                        },
-                        scrollConnection = scrollConnection,
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .onSizeChanged { size ->
-                                if (size.height > navBarOccupiedPx) {
-                                    navBarOccupiedPx = size.height.toFloat()
+                        }
+                    } else {
+                        AttendXFloatingNavBar(
+                            tabs = navTabs,
+                            selectedIndex = selectedTabIndex,
+                            onTabSelected = { index ->
+                                view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                                val targetRoute = tabRoutes[index]
+                                if (targetRoute == "home") {
+                                    homeViewModel.triggerHomeAnimation()
                                 }
-                            }
-                            .navigationBarsPadding()
-                            .padding(bottom = 12.dp, start = 20.dp, end = 20.dp)
-                    )
+                                navController.navigate(targetRoute) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            scrollConnection = scrollConnection,
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .onSizeChanged { size ->
+                                    if (size.height > navBarOccupiedPx) {
+                                        navBarOccupiedPx = size.height.toFloat()
+                                    }
+                                }
+                                .navigationBarsPadding()
+                                .padding(bottom = 12.dp, start = 20.dp, end = 20.dp)
+                        )
+                    }
                 }
             }
         }

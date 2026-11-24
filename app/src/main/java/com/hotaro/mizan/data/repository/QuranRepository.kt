@@ -138,6 +138,8 @@ class QuranRepository @Inject constructor(
     val manualIsha = preferenceManager.manualIsha
     val selectedAppIcon = preferenceManager.selectedAppIcon
     val navBarBlurStyle = preferenceManager.navBarBlurStyle
+    val windowAnimationStyle = preferenceManager.windowAnimationStyle
+    val useClassicNavBar = preferenceManager.useClassicNavBar
     val prayerReminderEnabled = preferenceManager.prayerReminderEnabled
     val prayerReminderMinutesBefore = preferenceManager.prayerReminderMinutesBefore
 
@@ -197,12 +199,24 @@ class QuranRepository @Inject constructor(
         preferenceManager.saveNavBarBlurStyle(style)
     }
 
+    suspend fun saveWindowAnimationStyle(style: String) {
+        preferenceManager.saveWindowAnimationStyle(style)
+    }
+
+    suspend fun saveUseClassicNavBar(enabled: Boolean) {
+        preferenceManager.saveUseClassicNavBar(enabled)
+    }
+
     suspend fun savePrayerReminderEnabled(enabled: Boolean) {
         preferenceManager.savePrayerReminderEnabled(enabled)
     }
 
     suspend fun savePrayerReminderMinutesBefore(minutes: Int) {
         preferenceManager.savePrayerReminderMinutesBefore(minutes)
+    }
+
+    suspend fun saveCachedPrayerTimes(fajr: String, dhuhr: String, asr: String, maghrib: String, isha: String) {
+        preferenceManager.saveCachedPrayerTimes(fajr, dhuhr, asr, maghrib, isha)
     }
 
     // Surah List

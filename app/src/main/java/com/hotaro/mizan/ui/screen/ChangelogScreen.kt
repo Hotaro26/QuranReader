@@ -173,7 +173,7 @@ fun ChangelogScreen(
                                 Spacer(Modifier.width(16.dp))
                                 Column {
                                     Text(
-                                        "Mizan v1.0.0",
+                                        "Mizan v2.0",
                                         style = MaterialTheme.typography.titleLarge,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -312,32 +312,18 @@ fun ChangelogScreen(
                                 }
                             }
 
-                            if (release.downloadUrl != null || release.htmlUrl != null) {
+                            if (release.htmlUrl != null) {
                                 Spacer(Modifier.height(14.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    if (release.downloadUrl != null) {
-                                        FilledTonalButton(
-                                            onClick = {
-                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(release.downloadUrl))
-                                                context.startActivity(intent)
-                                            },
-                                            shape = RoundedCornerShape(12.dp),
-                                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                                        ) {
-                                            Text("Download APK", style = MaterialTheme.typography.labelMedium)
-                                        }
-                                    }
-                                    if (release.htmlUrl != null) {
-                                        OutlinedButton(
-                                            onClick = {
-                                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(release.htmlUrl))
-                                                context.startActivity(intent)
-                                            },
-                                            shape = RoundedCornerShape(12.dp),
-                                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
-                                        ) {
-                                            Text("View on GitHub", style = MaterialTheme.typography.labelMedium)
-                                        }
+                                    OutlinedButton(
+                                        onClick = {
+                                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(release.htmlUrl))
+                                            context.startActivity(intent)
+                                        },
+                                        shape = RoundedCornerShape(12.dp),
+                                        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                                    ) {
+                                        Text("View on GitHub", style = MaterialTheme.typography.labelMedium)
                                     }
                                 }
                             }

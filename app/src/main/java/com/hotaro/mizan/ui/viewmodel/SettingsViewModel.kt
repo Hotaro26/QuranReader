@@ -7,8 +7,10 @@ import com.hotaro.mizan.data.model.Edition
 import com.hotaro.mizan.data.model.ReleaseNote
 import com.hotaro.mizan.data.model.Todo
 import com.hotaro.mizan.data.repository.QuranRepository
+import com.hotaro.mizan.reminder.PrayerReminderManager
 import com.hotaro.mizan.util.AppIconManager
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -17,7 +19,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val repository: QuranRepository
+    private val repository: QuranRepository,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _editions = MutableStateFlow<List<Edition>>(emptyList())
@@ -79,7 +82,7 @@ class SettingsViewModel @Inject constructor(
     val selectedTranslation = repository.selectedTranslation.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "eng-mustafakhattabg")
     val appFont = repository.appFont.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "default")
     val prayerCalculationMethod = repository.prayerCalculationMethod.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2)
-    val showContinuePill = repository.showContinuePill.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    val showContinuePill = repository.showContinuePill.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
     val manualFajr = repository.manualFajr.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "05:00")
     val manualDhuhr = repository.manualDhuhr.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "12:30")
     val manualAsr = repository.manualAsr.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "15:45")
@@ -87,24 +90,44 @@ class SettingsViewModel @Inject constructor(
     val manualIsha = repository.manualIsha.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "20:00")
     val selectedAppIcon = repository.selectedAppIcon.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "emerald")
     val navBarBlurStyle = repository.navBarBlurStyle.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "glass")
+    val windowAnimationStyle = repository.windowAnimationStyle.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "default")
+    val useClassicNavBar = repository.useClassicNavBar.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
     val prayerReminderEnabled = repository.prayerReminderEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
     val prayerReminderMinutesBefore = repository.prayerReminderMinutesBefore.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 10)
+
+    fun sendTestNotification() {
+        PrayerReminderManager.showTestNotification(context)
+    }
 
     fun setPrayerReminderEnabled(enabled: Boolean) {
         viewModelScope.launch {
             repository.savePrayerReminderEnabled(enabled)
+            PrayerReminderManager.scheduleReminders(context)
         }
     }
 
     fun setPrayerReminderMinutesBefore(minutes: Int) {
         viewModelScope.launch {
             repository.savePrayerReminderMinutesBefore(minutes)
+            PrayerReminderManager.scheduleReminders(context)
         }
     }
 
     fun setNavBarBlurStyle(style: String) {
         viewModelScope.launch {
             repository.saveNavBarBlurStyle(style)
+        }
+    }
+
+    fun setWindowAnimationStyle(style: String) {
+        viewModelScope.launch {
+            repository.saveWindowAnimationStyle(style)
+        }
+    }
+
+    fun setUseClassicNavBar(enabled: Boolean) {
+        viewModelScope.launch {
+            repository.saveUseClassicNavBar(enabled)
         }
     }
 
@@ -118,6 +141,7 @@ class SettingsViewModel @Inject constructor(
     fun saveManualPrayerTime(prayer: String, time: String) {
         viewModelScope.launch {
             repository.saveManualPrayerTime(prayer, time)
+            PrayerReminderManager.scheduleReminders(context)
         }
     }
 

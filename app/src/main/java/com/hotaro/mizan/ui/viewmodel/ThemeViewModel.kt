@@ -15,7 +15,9 @@ data class AppThemeConfig(
     val colorPalette: String = "dynamic",
     val appFont: String = "default",
     val navBarBlurStyle: String = "glass",
-    val hasCompletedOnboarding: Boolean = false
+    val hasCompletedOnboarding: Boolean = false,
+    val windowAnimationStyle: String = "default",
+    val useClassicNavBar: Boolean = false
 )
 
 @HiltViewModel
@@ -28,14 +30,18 @@ class ThemeViewModel @Inject constructor(
         repository.colorPalette,
         repository.appFont,
         repository.navBarBlurStyle,
-        repository.hasCompletedOnboarding
-    ) { mode, palette, font, blur, onboarding ->
+        repository.hasCompletedOnboarding,
+        repository.windowAnimationStyle,
+        repository.useClassicNavBar
+    ) { args: Array<Any?> ->
         AppThemeConfig(
-            themeMode = mode,
-            colorPalette = palette,
-            appFont = font,
-            navBarBlurStyle = blur,
-            hasCompletedOnboarding = onboarding
+            themeMode = args[0] as? Int ?: 0,
+            colorPalette = args[1] as? String ?: "dynamic",
+            appFont = args[2] as? String ?: "default",
+            navBarBlurStyle = args[3] as? String ?: "glass",
+            hasCompletedOnboarding = args[4] as? Boolean ?: false,
+            windowAnimationStyle = args[5] as? String ?: "default",
+            useClassicNavBar = args[6] as? Boolean ?: false
         )
     }.stateIn(
         viewModelScope,
@@ -65,5 +71,17 @@ class ThemeViewModel @Inject constructor(
         viewModelScope,
         SharingStarted.WhileSubscribed(5000),
         "glass"
+    )
+
+    val windowAnimationStyle = repository.windowAnimationStyle.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        "default"
+    )
+
+    val useClassicNavBar = repository.useClassicNavBar.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5000),
+        false
     )
 }

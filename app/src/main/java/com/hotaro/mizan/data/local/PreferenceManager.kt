@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "quran_prefs")
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "quran_prefs")
 
 @Singleton
 class PreferenceManager @Inject constructor(private val context: Context) {
@@ -32,8 +32,15 @@ class PreferenceManager @Inject constructor(private val context: Context) {
         val MANUAL_ASR = stringPreferencesKey("manual_asr")
         val MANUAL_MAGHRIB = stringPreferencesKey("manual_maghrib")
         val MANUAL_ISHA = stringPreferencesKey("manual_isha")
+        val CACHED_FAJR = stringPreferencesKey("cached_fajr")
+        val CACHED_DHUHR = stringPreferencesKey("cached_dhuhr")
+        val CACHED_ASR = stringPreferencesKey("cached_asr")
+        val CACHED_MAGHRIB = stringPreferencesKey("cached_maghrib")
+        val CACHED_ISHA = stringPreferencesKey("cached_isha")
         val SELECTED_APP_ICON = stringPreferencesKey("selected_app_icon")
         val NAV_BAR_BLUR_STYLE = stringPreferencesKey("nav_bar_blur_style")
+        val WINDOW_ANIMATION_STYLE = stringPreferencesKey("window_animation_style")
+        val USE_CLASSIC_NAV_BAR = booleanPreferencesKey("use_classic_nav_bar")
         val PRAYER_REMINDER_ENABLED = booleanPreferencesKey("prayer_reminder_enabled")
         val PRAYER_REMINDER_MINUTES_BEFORE = intPreferencesKey("prayer_reminder_minutes_before")
     }
@@ -83,7 +90,7 @@ class PreferenceManager @Inject constructor(private val context: Context) {
     }
 
     val showContinuePill: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[PreferencesKeys.SHOW_CONTINUE_PILL] ?: true
+        preferences[PreferencesKeys.SHOW_CONTINUE_PILL] ?: false
     }
 
     val manualFajr: Flow<String> = context.dataStore.data.map { preferences ->
@@ -112,6 +119,14 @@ class PreferenceManager @Inject constructor(private val context: Context) {
 
     val navBarBlurStyle: Flow<String> = context.dataStore.data.map { preferences ->
         preferences[PreferencesKeys.NAV_BAR_BLUR_STYLE] ?: "glass"
+    }
+
+    val windowAnimationStyle: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.WINDOW_ANIMATION_STYLE] ?: "default"
+    }
+
+    val useClassicNavBar: Flow<Boolean> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.USE_CLASSIC_NAV_BAR] ?: false
     }
 
     val prayerReminderEnabled: Flow<Boolean> = context.dataStore.data.map { preferences ->
@@ -213,6 +228,18 @@ class PreferenceManager @Inject constructor(private val context: Context) {
         }
     }
 
+    suspend fun saveWindowAnimationStyle(style: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.WINDOW_ANIMATION_STYLE] = style
+        }
+    }
+
+    suspend fun saveUseClassicNavBar(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.USE_CLASSIC_NAV_BAR] = enabled
+        }
+    }
+
     suspend fun savePrayerReminderEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.PRAYER_REMINDER_ENABLED] = enabled
@@ -222,6 +249,16 @@ class PreferenceManager @Inject constructor(private val context: Context) {
     suspend fun savePrayerReminderMinutesBefore(minutes: Int) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.PRAYER_REMINDER_MINUTES_BEFORE] = minutes
+        }
+    }
+
+    suspend fun saveCachedPrayerTimes(fajr: String, dhuhr: String, asr: String, maghrib: String, isha: String) {
+        context.dataStore.edit { preferences ->
+            preferences[PreferencesKeys.CACHED_FAJR] = fajr
+            preferences[PreferencesKeys.CACHED_DHUHR] = dhuhr
+            preferences[PreferencesKeys.CACHED_ASR] = asr
+            preferences[PreferencesKeys.CACHED_MAGHRIB] = maghrib
+            preferences[PreferencesKeys.CACHED_ISHA] = isha
         }
     }
 }

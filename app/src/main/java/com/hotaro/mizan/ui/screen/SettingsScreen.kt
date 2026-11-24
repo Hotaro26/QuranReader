@@ -166,7 +166,7 @@ fun SettingsScreen(
                         subtitle = "Select app appearance",
                         currentValue = themes.find { it.second == themeMode }?.first ?: "System",
                         options = themes,
-                        shape = SettingsGroupShape.getShape(0, 6),
+                        shape = SettingsGroupShape.getShape(0, 5),
                         onSelected = { viewModel.setThemeMode(it) }
                     )
                 }
@@ -186,7 +186,7 @@ fun SettingsScreen(
                         subtitle = "Personalize colors across the UI",
                         currentValue = palettes.find { it.second == colorPalette }?.first ?: "Material You",
                         options = palettes,
-                        shape = SettingsGroupShape.getShape(1, 6),
+                        shape = SettingsGroupShape.getShape(1, 5),
                         onSelected = { viewModel.setColorPalette(it) }
                     )
                 }
@@ -201,30 +201,8 @@ fun SettingsScreen(
                         icon = Icons.Default.AppShortcut,
                         title = "App Icon",
                         subtitle = currentIconName,
-                        shape = SettingsGroupShape.getShape(2, 6),
+                        shape = SettingsGroupShape.getShape(2, 5),
                         onClick = { showAppIconSheet = true }
-                    )
-                }
-                item {
-                    val fonts = listOf(
-                        "Default" to "default",
-                        "Hey Comic" to "hey_comic",
-                        "KG Happy" to "kghappy",
-                        "Matcha Cih" to "matcha_cih",
-                        "Nirakolu" to "nirakolu",
-                        "Romantic Sunrise" to "romantic_sunrise",
-                        "Takeover" to "takeover",
-                        "Takeover 3D" to "takeover_3d",
-                        "Scratch Boys" to "scratch_boys"
-                    )
-                    ExpressiveDropdownSettingItem(
-                        icon = Icons.Default.TextFields,
-                        title = "App Typography",
-                        subtitle = "Choose reading & UI font",
-                        currentValue = fonts.find { it.second == appFont }?.first ?: "Default",
-                        options = fonts,
-                        shape = SettingsGroupShape.getShape(3, 6),
-                        onSelected = { viewModel.setAppFont(it) }
                     )
                 }
                 item {
@@ -238,7 +216,7 @@ fun SettingsScreen(
                         icon = Icons.Default.Schedule,
                         title = "Clock and Timer",
                         subtitle = "${if (use24HourFormat) "24-hour" else "12-hour"} • $reminderSummary",
-                        shape = SettingsGroupShape.getShape(4, 6),
+                        shape = SettingsGroupShape.getShape(3, 5),
                         onClick = onClockAndTimerClick
                     )
                 }
@@ -247,7 +225,7 @@ fun SettingsScreen(
                         icon = Icons.Default.Tune,
                         title = "Elements & Feel",
                         subtitle = "Customize homepage pills, layout & behavior",
-                        shape = SettingsGroupShape.getShape(5, 6),
+                        shape = SettingsGroupShape.getShape(4, 5),
                         onClick = onElementsAndFeelClick
                     )
                 }
@@ -1036,7 +1014,7 @@ fun ExpressiveAboutCard(onClick: () -> Unit = {}) {
                             contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                         ) {
                             Text(
-                                "v1.0.0",
+                                "v2.0",
                                 style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
@@ -1255,7 +1233,6 @@ fun SupportBottomSheet(
                         Text("Star the Repository", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                         Text("Show some love on GitHub", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Icon(Icons.Default.Star, contentDescription = null, tint = Color(0xFFFFB300))
                 }
             }
 
@@ -1266,7 +1243,7 @@ fun SupportBottomSheet(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/hotaro26"))
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com/oi.hotaro"))
                         try {
                             context.startActivity(intent)
                         } catch (_: Exception) {}
@@ -1299,9 +1276,8 @@ fun SupportBottomSheet(
                     Spacer(Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text("Buy Me a Coffee", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
-                        Text("Fuel ongoing design & development", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("buymeacoffee.com/oi.hotaro • Fuel design & development", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
