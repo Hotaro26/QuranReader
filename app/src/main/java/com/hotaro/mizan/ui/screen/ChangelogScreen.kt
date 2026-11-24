@@ -68,9 +68,34 @@ fun ChangelogScreen(
     val fallbackReleases = remember {
         listOf(
             ReleaseNote(
-                version = "v1.0.0",
+                version = "v2.3",
                 date = "24 November 2026",
                 isLatest = true,
+                tags = listOf("Feature", "Tasbih", "M3 Expressive"),
+                highlights = listOf(
+                    "Interactive Digital Tasbih counter with milestone haptic feedback and sound",
+                    "Dual-mode Qibla ↔ Tasbih flippable card with swipe gestures and state persistence",
+                    "Auto-hiding swipe indicator and expand icons after 3 seconds of card interaction",
+                    "Dedicated full-screen Tasbih experience with 9 authentic Adhkar and customizable targets",
+                    "Dynamic app version indicator in About & Developer settings",
+                    "Clean home back press behavior to smoothly quit the application",
+                    "Intelligent permissions card visibility that dynamically hides when all permissions are granted"
+                )
+            ),
+            ReleaseNote(
+                version = "v2.2",
+                date = "24 November 2026",
+                tags = listOf("Feature", "Qibla", "Sensor Fusion"),
+                highlights = listOf(
+                    "Complete revamp of Qibla Finder with Material 3 Expressive design",
+                    "Upright counter-rotated degree markers and cardinal letters",
+                    "Fused sensor tracking (rotation vector with accelerometer/magnetometer fallback)",
+                    "Haversine distance calculation to Kaaba with tilt & level guidance"
+                )
+            ),
+            ReleaseNote(
+                version = "v1.0.0",
+                date = "24 November 2026",
                 tags = listOf("Major", "Liquid Glass", "M3 Expressive"),
                 highlights = listOf(
                     "Rebranded to Mizan with unified package identifier com.hotaro.mizan",

@@ -1,11 +1,15 @@
 @file:OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 package com.hotaro.mizan.ui.screen
 
+import android.Manifest
+import android.app.AlarmManager
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -39,7 +43,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.hotaro.mizan.BuildConfig
 import com.hotaro.mizan.LocalFloatingNavBarPadding
 import com.hotaro.mizan.R
@@ -67,6 +76,36 @@ object SettingsGroupShape {
     }
 }
 
+private fun areAnyPermissionsMissing(context: Context): Boolean {
+    val fine = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.ACCESS_FINE_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED
+    val coarse = ContextCompat.checkSelfPermission(
+        context,
+        Manifest.permission.ACCESS_COARSE_LOCATION
+    ) == PackageManager.PERMISSION_GRANTED
+    val hasLocation = fine || coarse
+
+    val hasNotification = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+    } else {
+        NotificationManagerCompat.from(context).areNotificationsEnabled()
+    }
+
+    val hasAlarm = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+        alarmManager?.canScheduleExactAlarms() ?: true
+    } else {
+        true
+    }
+
+    return !hasLocation || !hasNotification || !hasAlarm
+}
+
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = hiltViewModel(),
@@ -75,6 +114,22 @@ fun SettingsScreen(
     onAboutClick: () -> Unit = {},
     onPermissionsClick: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var hasMissingPermissions by remember { mutableStateOf(areAnyPermissionsMissing(context)) }
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                hasMissingPermissions = areAnyPermissionsMissing(context)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
     val themeMode by viewModel.themeMode.collectAsState()
     val colorPalette by viewModel.colorPalette.collectAsState()
     val use24HourFormat by viewModel.use24HourFormat.collectAsState()
@@ -100,7 +155,6 @@ fun SettingsScreen(
     var showAppIconSheet by remember { mutableStateOf(false) }
     var showSupportSheet by remember { mutableStateOf(false) }
     var showSupportDialog by remember { mutableStateOf(false) }
-    val context = LocalContext.current
     val myUpiId = "sakibreza035@okaxis"
 
     val calculationMethods = remember {
@@ -238,12 +292,13 @@ fun SettingsScreen(
                     Spacer(Modifier.height(8.dp))
                     SettingsSectionHeader("Reading & Prayer Times")
                 }
+                val readingPrayerTotal = if (hasMissingPermissions) 3 else 2
                 item {
                     ExpressiveActionSettingItem(
                         icon = Icons.Default.Translate,
                         title = "Translation Edition",
                         subtitle = selectedTranslation,
-                        shape = SettingsGroupShape.getShape(0, 3),
+                        shape = SettingsGroupShape.getShape(0, readingPrayerTotal),
                         onClick = { showTranslationSheet = true }
                     )
                 }
@@ -252,18 +307,20 @@ fun SettingsScreen(
                         icon = Icons.Default.Mosque,
                         title = "Calculation Method",
                         subtitle = if (prayerCalculationMethod == -1) "Manual • Tap to adjust times" else currentMethodLabel,
-                        shape = SettingsGroupShape.getShape(1, 3),
+                        shape = SettingsGroupShape.getShape(1, readingPrayerTotal),
                         onClick = { showCalculationSheet = true }
                     )
                 }
-                item {
-                    ExpressiveActionSettingItem(
-                        icon = Icons.Default.Security,
-                        title = "Permissions & Setup",
-                        subtitle = "Review location, alarms, & notifications",
-                        shape = SettingsGroupShape.getShape(2, 3),
-                        onClick = onPermissionsClick
-                    )
+                if (hasMissingPermissions) {
+                    item {
+                        ExpressiveActionSettingItem(
+                            icon = Icons.Default.Security,
+                            title = "Permissions & Setup",
+                            subtitle = "Review location, alarms, & notifications",
+                            shape = SettingsGroupShape.getShape(2, readingPrayerTotal),
+                            onClick = onPermissionsClick
+                        )
+                    }
                 }
 
                 // Section: About

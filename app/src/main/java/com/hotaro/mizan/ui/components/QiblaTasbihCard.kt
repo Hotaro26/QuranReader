@@ -6,6 +6,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -26,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,7 +51,9 @@ fun QiblaTasbihCard(
     val haptic = LocalHapticFeedback.current
 
     var showIndicator by remember { mutableStateOf(true) }
-    LaunchedEffect(activePage) {
+    var interactionTrigger by remember { mutableIntStateOf(0) }
+
+    LaunchedEffect(activePage, interactionTrigger) {
         showIndicator = true
         kotlinx.coroutines.delay(3000L)
         showIndicator = false
@@ -71,6 +76,12 @@ fun QiblaTasbihCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    interactionTrigger++
+                }
+            }
             .draggable(
                 orientation = Orientation.Horizontal,
                 state = rememberDraggableState { delta ->
@@ -149,7 +160,10 @@ fun QiblaTasbihCard(
                     onClick = {
                         if (activePage == 0) onQiblaClick() else onTasbihClick()
                     },
-                    modifier = Modifier.size(24.dp)
+                    modifier = Modifier
+                        .size(24.dp)
+                        .graphicsLayer { alpha = indicatorAlpha },
+                    enabled = indicatorAlpha > 0.05f
                 ) {
                     Icon(
                         Icons.Default.OpenInFull,
@@ -190,7 +204,7 @@ fun QiblaTasbihCard(
                         verticalArrangement = Arrangement.Center
                     ) {
                         Text(
-                            text = "Kaaba Compass",
+                            text = "Compass",
                             style = MaterialTheme.typography.titleLarge,
                             fontWeight = FontWeight.Black,
                             maxLines = 1,
