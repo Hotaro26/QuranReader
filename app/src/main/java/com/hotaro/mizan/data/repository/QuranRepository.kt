@@ -128,6 +128,11 @@ class QuranRepository @Inject constructor(
     val hasCompletedOnboarding = preferenceManager.hasCompletedOnboarding
     val prayerCalculationMethod = preferenceManager.prayerCalculationMethod
     val showContinuePill = preferenceManager.showContinuePill
+    val manualFajr = preferenceManager.manualFajr
+    val manualDhuhr = preferenceManager.manualDhuhr
+    val manualAsr = preferenceManager.manualAsr
+    val manualMaghrib = preferenceManager.manualMaghrib
+    val manualIsha = preferenceManager.manualIsha
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
         preferenceManager.saveLastRead(surah, ayah)
@@ -171,6 +176,10 @@ class QuranRepository @Inject constructor(
 
     suspend fun saveShowContinuePill(show: Boolean) {
         preferenceManager.saveShowContinuePill(show)
+    }
+
+    suspend fun saveManualPrayerTime(prayer: String, time: String) {
+        preferenceManager.saveManualPrayerTime(prayer, time)
     }
 
     // Surah List

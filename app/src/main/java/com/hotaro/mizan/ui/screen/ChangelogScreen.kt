@@ -50,6 +50,18 @@ fun ChangelogScreen(
     var updateStatusMessage by remember { mutableStateOf<String?>(null) }
     var isRefreshing by remember { mutableStateOf(false) }
 
+    val checkUpdate: () -> Unit = {
+        coroutineScope.launch {
+            isCheckingUpdate = true
+            isRefreshing = true
+            updateStatusMessage = null
+            delay(1200)
+            isCheckingUpdate = false
+            isRefreshing = false
+            updateStatusMessage = "You have the latest version of Mizan!"
+        }
+    }
+
     val releases = remember {
         listOf(
             ReleaseNote(
@@ -93,13 +105,7 @@ fun ChangelogScreen(
 
     RoundedPullRefreshPage(
         isRefreshing = isRefreshing,
-        onRefresh = {
-            coroutineScope.launch {
-                isRefreshing = true
-                delay(800)
-                isRefreshing = false
-            }
-        },
+        onRefresh = { checkUpdate() },
         topBar = {
             TopAppBar(
                 title = {
@@ -185,15 +191,7 @@ fun ChangelogScreen(
                             Spacer(Modifier.height(18.dp))
 
                             Button(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        isCheckingUpdate = true
-                                        updateStatusMessage = null
-                                        delay(1200)
-                                        isCheckingUpdate = false
-                                        updateStatusMessage = "You have the latest version of Mizan!"
-                                    }
-                                },
+                                onClick = { checkUpdate() },
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(18.dp),
                                 colors = ButtonDefaults.buttonColors(

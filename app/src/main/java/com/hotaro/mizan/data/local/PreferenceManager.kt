@@ -27,6 +27,11 @@ class PreferenceManager @Inject constructor(private val context: Context) {
         val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
         val PRAYER_CALCULATION_METHOD = intPreferencesKey("prayer_calculation_method")
         val SHOW_CONTINUE_PILL = booleanPreferencesKey("show_continue_pill")
+        val MANUAL_FAJR = stringPreferencesKey("manual_fajr")
+        val MANUAL_DHUHR = stringPreferencesKey("manual_dhuhr")
+        val MANUAL_ASR = stringPreferencesKey("manual_asr")
+        val MANUAL_MAGHRIB = stringPreferencesKey("manual_maghrib")
+        val MANUAL_ISHA = stringPreferencesKey("manual_isha")
     }
 
     val lastReadSurah: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -75,6 +80,26 @@ class PreferenceManager @Inject constructor(private val context: Context) {
 
     val showContinuePill: Flow<Boolean> = context.dataStore.data.map { preferences ->
         preferences[PreferencesKeys.SHOW_CONTINUE_PILL] ?: true
+    }
+
+    val manualFajr: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.MANUAL_FAJR] ?: "05:00"
+    }
+
+    val manualDhuhr: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.MANUAL_DHUHR] ?: "12:30"
+    }
+
+    val manualAsr: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.MANUAL_ASR] ?: "15:45"
+    }
+
+    val manualMaghrib: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.MANUAL_MAGHRIB] ?: "18:30"
+    }
+
+    val manualIsha: Flow<String> = context.dataStore.data.map { preferences ->
+        preferences[PreferencesKeys.MANUAL_ISHA] ?: "20:00"
     }
 
     suspend fun saveLastRead(surah: Int, ayah: Int) {
@@ -141,6 +166,18 @@ class PreferenceManager @Inject constructor(private val context: Context) {
     suspend fun saveShowContinuePill(show: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[PreferencesKeys.SHOW_CONTINUE_PILL] = show
+        }
+    }
+
+    suspend fun saveManualPrayerTime(prayer: String, time: String) {
+        context.dataStore.edit { preferences ->
+            when (prayer.lowercase()) {
+                "fajr" -> preferences[PreferencesKeys.MANUAL_FAJR] = time
+                "dhuhr" -> preferences[PreferencesKeys.MANUAL_DHUHR] = time
+                "asr" -> preferences[PreferencesKeys.MANUAL_ASR] = time
+                "maghrib" -> preferences[PreferencesKeys.MANUAL_MAGHRIB] = time
+                "isha" -> preferences[PreferencesKeys.MANUAL_ISHA] = time
+            }
         }
     }
 

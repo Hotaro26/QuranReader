@@ -9,6 +9,7 @@ import android.net.Uri
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -34,12 +35,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.hotaro.mizan.LocalFloatingNavBarPadding
 import com.hotaro.mizan.R
 import com.hotaro.mizan.data.model.Edition
 import com.hotaro.mizan.ui.components.RoundedPullRefreshPage
 import com.hotaro.mizan.ui.viewmodel.SettingsViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 // AttendX-inspired card corner grouping shapes
 object SettingsGroupShape {
@@ -70,6 +76,11 @@ fun SettingsScreen(
     val selectedTranslation by viewModel.selectedTranslation.collectAsState()
     val appFont by viewModel.appFont.collectAsState()
     val prayerCalculationMethod by viewModel.prayerCalculationMethod.collectAsState()
+    val manualFajr by viewModel.manualFajr.collectAsState()
+    val manualDhuhr by viewModel.manualDhuhr.collectAsState()
+    val manualAsr by viewModel.manualAsr.collectAsState()
+    val manualMaghrib by viewModel.manualMaghrib.collectAsState()
+    val manualIsha by viewModel.manualIsha.collectAsState()
     val editions by viewModel.filteredEditions.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -77,6 +88,7 @@ fun SettingsScreen(
 
     var showTranslationSheet by remember { mutableStateOf(false) }
     var showCalculationSheet by remember { mutableStateOf(false) }
+    var showManualTimesSheet by remember { mutableStateOf(false) }
     var showSupportSheet by remember { mutableStateOf(false) }
     var showSupportDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -84,6 +96,7 @@ fun SettingsScreen(
 
     val calculationMethods = remember {
         listOf(
+            "Manual" to -1,
             "Shia Ithna-Ashari" to 0,
             "University of Islamic Sciences, Karachi" to 1,
             "Islamic Society of North America" to 2,
@@ -230,7 +243,7 @@ fun SettingsScreen(
                     ExpressiveActionSettingItem(
                         icon = Icons.Default.Mosque,
                         title = "Calculation Method",
-                        subtitle = currentMethodLabel,
+                        subtitle = if (prayerCalculationMethod == -1) "Manual • Tap to adjust times" else currentMethodLabel,
                         shape = SettingsGroupShape.getShape(1, 2),
                         onClick = { showCalculationSheet = true }
                     )
@@ -367,22 +380,140 @@ fun SettingsScreen(
                                 .clickable {
                                     viewModel.setPrayerCalculationMethod(value)
                                     showCalculationSheet = false
+                                    if (value == -1) {
+                                        showManualTimesSheet = true
+                                    }
                                 }
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 18.dp, vertical = 16.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = label,
-                                    style = MaterialTheme.typography.titleSmall,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                                    modifier = Modifier.weight(1f)
-                                )
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    )
+                                    if (value == -1) {
+                                        Text(
+                                            text = "Manually set Fajr, Dhuhr, Asr, Maghrib, and Isha times",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
                                 if (isSelected) {
                                     Icon(
                                         Icons.Default.Check,
                                         contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                } else if (value == -1) {
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Modal Bottom Sheet for Manual Prayer Times Configuration
+    if (showManualTimesSheet) {
+        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        var editingPrayer by remember { mutableStateOf<Pair<String, String>?>(null) }
+
+        ModalBottomSheet(
+            onDismissRequest = { showManualTimesSheet = false },
+            sheetState = sheetState,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "Manual Prayer Times",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                Text(
+                    text = "Tap on any prayer to adjust its exact timing",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                val prayers = listOf(
+                    Triple("Fajr", manualFajr, Icons.Default.WbTwilight),
+                    Triple("Dhuhr", manualDhuhr, Icons.Default.WbSunny),
+                    Triple("Asr", manualAsr, Icons.Default.LightMode),
+                    Triple("Maghrib", manualMaghrib, Icons.Default.NightsStay),
+                    Triple("Isha", manualIsha, Icons.Default.DarkMode)
+                )
+
+                prayers.forEach { (name, time, icon) ->
+                    val displayTime = formatDisplayPrayerTime(time, use24HourFormat)
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = MaterialTheme.colorScheme.surfaceContainer,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .clickable {
+                                editingPrayer = name to time
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Surface(
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(38.dp)
+                            ) {
+                                Box(contentAlignment = Alignment.Center) {
+                                    Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+                                }
+                            }
+                            Spacer(Modifier.width(14.dp))
+                            Text(
+                                text = name,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(10.dp),
+                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                contentColor = MaterialTheme.colorScheme.onSurface
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = displayTime,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = "Edit $name",
+                                        modifier = Modifier.size(14.dp),
                                         tint = MaterialTheme.colorScheme.primary
                                     )
                                 }
@@ -390,6 +521,57 @@ fun SettingsScreen(
                         }
                     }
                 }
+
+                Spacer(Modifier.height(16.dp))
+
+                Button(
+                    onClick = { showManualTimesSheet = false },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary
+                    )
+                ) {
+                    Text("Save & Apply", fontWeight = FontWeight.Bold)
+                }
+
+                Spacer(Modifier.height(20.dp))
+            }
+        }
+
+        // Time Picker Dialog for setting prayer time
+        if (editingPrayer != null) {
+            val (currentPrayerName, currentTimeString) = editingPrayer!!
+            val parts = currentTimeString.split(":")
+            val initialH = parts.getOrNull(0)?.toIntOrNull() ?: 5
+            val initialM = parts.getOrNull(1)?.toIntOrNull() ?: 0
+
+            val timePickerState = rememberTimePickerState(
+                initialHour = initialH,
+                initialMinute = initialM,
+                is24Hour = use24HourFormat
+            )
+
+            TimePickerDialog(
+                title = "Set $currentPrayerName Time",
+                onDismissRequest = { editingPrayer = null },
+                confirmButton = {
+                    TextButton(onClick = {
+                        val formattedTime = String.format(Locale.US, "%02d:%02d", timePickerState.hour, timePickerState.minute)
+                        viewModel.saveManualPrayerTime(currentPrayerName, formattedTime)
+                        editingPrayer = null
+                    }) {
+                        Text("Confirm", fontWeight = FontWeight.Bold)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { editingPrayer = null }) {
+                        Text("Cancel")
+                    }
+                }
+            ) {
+                TimePicker(state = timePickerState)
             }
         }
     }
@@ -721,11 +903,24 @@ fun ExpressiveAboutCard(onClick: () -> Unit = {}) {
                             )
                         }
                     }
-                    Text(
-                        text = "Crafted with ❤️ by Hotaro • Tap for changelog & updates",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Crafted with ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Icon(
+                            Icons.Default.Favorite,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Text(
+                            text = " by Hotaro • Tap for changelog & updates",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
                 Icon(
                     Icons.AutoMirrored.Filled.ArrowForward,
@@ -960,6 +1155,70 @@ fun SupportBottomSheet(
                         Text("Fuel ongoing design & development", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+    }
+}
+
+private fun formatDisplayPrayerTime(time: String, use24Hour: Boolean): String {
+    return try {
+        val inFormat = SimpleDateFormat("HH:mm", Locale.US)
+        val outFormat = if (use24Hour) SimpleDateFormat("HH:mm", Locale.US) else SimpleDateFormat("hh:mm a", Locale.US)
+        val date = inFormat.parse(time) ?: Date()
+        outFormat.format(date)
+    } catch (_: Exception) {
+        time
+    }
+}
+
+@Composable
+fun TimePickerDialog(
+    title: String = "Select Time",
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: @Composable (() -> Unit)? = null,
+    content: @Composable () -> Unit,
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(28.dp),
+            tonalElevation = 6.dp,
+            modifier = Modifier
+                .width(IntrinsicSize.Min)
+                .height(IntrinsicSize.Min)
+                .background(
+                    shape = RoundedCornerShape(28.dp),
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+            color = MaterialTheme.colorScheme.surfaceContainerHigh
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 20.dp)
+                )
+                content()
+                Row(
+                    modifier = Modifier
+                        .padding(top = 16.dp)
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    dismissButton?.invoke()
+                    Spacer(Modifier.width(8.dp))
+                    confirmButton()
                 }
             }
         }

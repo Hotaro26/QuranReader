@@ -40,6 +40,17 @@ class SettingsViewModel @Inject constructor(
     val appFont = repository.appFont.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "default")
     val prayerCalculationMethod = repository.prayerCalculationMethod.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 2)
     val showContinuePill = repository.showContinuePill.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)
+    val manualFajr = repository.manualFajr.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "05:00")
+    val manualDhuhr = repository.manualDhuhr.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "12:30")
+    val manualAsr = repository.manualAsr.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "15:45")
+    val manualMaghrib = repository.manualMaghrib.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "18:30")
+    val manualIsha = repository.manualIsha.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), "20:00")
+
+    fun saveManualPrayerTime(prayer: String, time: String) {
+        viewModelScope.launch {
+            repository.saveManualPrayerTime(prayer, time)
+        }
+    }
 
     fun updateShowContinuePill(show: Boolean) {
         viewModelScope.launch {

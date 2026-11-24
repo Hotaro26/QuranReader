@@ -79,6 +79,40 @@ class HomeViewModel @Inject constructor(
 
     init {
         updateTime()
+        observeManualPrayerTimes()
+    }
+
+    private fun observeManualPrayerTimes() {
+        viewModelScope.launch {
+            combine(
+                repository.prayerCalculationMethod,
+                repository.manualFajr,
+                repository.manualDhuhr,
+                repository.manualAsr,
+                repository.manualMaghrib,
+                repository.manualIsha,
+                repository.use24HourFormat
+            ) { args ->
+                val method = args[0] as Int
+                val fajr = args[1] as String
+                val dhuhr = args[2] as String
+                val asr = args[3] as String
+                val maghrib = args[4] as String
+                val isha = args[5] as String
+                val use24Hour = args[6] as Boolean
+
+                if (method == -1) {
+                    val manualTimes = listOf(
+                        "Fajr" to fajr,
+                        "Dhuhr" to dhuhr,
+                        "Asr" to asr,
+                        "Maghrib" to maghrib,
+                        "Isha" to isha
+                    )
+                    _prayerTimes.value = PrayerTimeProvider.formatPrayerTimes(manualTimes, use24Hour)
+                }
+            }.collect()
+        }
     }
 
     private fun updateTime() {
@@ -120,19 +154,31 @@ class HomeViewModel @Inject constructor(
                 _cityName.value = city
 
                 val method = repository.prayerCalculationMethod.first()
-                val prayerResponse = repository.getPrayerTimings(location.latitude, location.longitude, method)
-                
-                if (prayerResponse.isSuccessful) {
-                    prayerResponse.body()?.data?.timings?.let { timings ->
-                        val rawTimes = listOf(
-                            "Fajr" to timings.Fajr,
-                            "Dhuhr" to timings.Dhuhr,
-                            "Asr" to timings.Asr,
-                            "Maghrib" to timings.Maghrib,
-                            "Isha" to timings.Isha
-                        )
-                        val use24Hour = repository.use24HourFormat.first()
-                        _prayerTimes.value = PrayerTimeProvider.formatPrayerTimes(rawTimes, use24Hour)
+                if (method == -1) {
+                    val manualTimes = listOf(
+                        "Fajr" to repository.manualFajr.first(),
+                        "Dhuhr" to repository.manualDhuhr.first(),
+                        "Asr" to repository.manualAsr.first(),
+                        "Maghrib" to repository.manualMaghrib.first(),
+                        "Isha" to repository.manualIsha.first()
+                    )
+                    val use24Hour = repository.use24HourFormat.first()
+                    _prayerTimes.value = PrayerTimeProvider.formatPrayerTimes(manualTimes, use24Hour)
+                } else {
+                    val prayerResponse = repository.getPrayerTimings(location.latitude, location.longitude, method)
+                    
+                    if (prayerResponse.isSuccessful) {
+                        prayerResponse.body()?.data?.timings?.let { timings ->
+                            val rawTimes = listOf(
+                                "Fajr" to timings.Fajr,
+                                "Dhuhr" to timings.Dhuhr,
+                                "Asr" to timings.Asr,
+                                "Maghrib" to timings.Maghrib,
+                                "Isha" to timings.Isha
+                            )
+                            val use24Hour = repository.use24HourFormat.first()
+                            _prayerTimes.value = PrayerTimeProvider.formatPrayerTimes(rawTimes, use24Hour)
+                        }
                     }
                 }
 
