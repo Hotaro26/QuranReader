@@ -22,7 +22,13 @@ Quran Reader is a modern, feature-rich Android application built with Jetpack Co
 > Use **translation** feature to change ayah/Surah language. It supports almost 400+ local lang.
 
 ## Screenshots
+## Screenshots
 
+| | | |
+|:---:|:---:|:---:|
+| <img src="https://github.com/user-attachments/assets/ea1ff03f-bff6-4a00-b300-703b78b6612f" width="250" alt="Screenshot 1" /> | <img src="https://github.com/user-attachments/assets/06019d20-c761-4f48-a504-3049b4aa0af7" width="250" alt="Screenshot 2" /> | <img src="https://github.com/user-attachments/assets/c1712c7f-48a6-4ff9-bb93-b71075cef89d" width="250" alt="Screenshot 3" /> |
+| <img src="https://github.com/user-attachments/assets/d7e29773-fc8e-4595-b9d0-d1bdb0aaad0d" width="250" alt="Screenshot 4" /> | <img src="https://github.com/user-attachments/assets/837d8b7d-f6d0-4add-a76c-cd24310ca02d" width="250" alt="Screenshot 5" /> | <img src="https://github.com/user-attachments/assets/1cabfe44-10b9-4ea9-950b-03c4e4b5277d" width="250" alt="Screenshot 6" /> |
+| <img src="https://github.com/user-attachments/assets/7c15ceac-4503-4875-a574-b301fcaaa80d" width="250" alt="Screenshot 7" /> | <img src="https://github.com/user-attachments/assets/940f7c16-9c19-4f91-977d-52dad2fdfff7" width="250" alt="Screenshot 8" /> | <img src="https://github.com/user-attachments/assets/a8b63965-d03f-4206-ac93-f62df98df404" width="250" alt="Screenshot 9" /> |
 <table>
   <tr>
     <td align="center" width="33%">
