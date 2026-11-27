@@ -1,6 +1,6 @@
-# Quran Reader
+# Mizan
 
-Quran Reader is a modern, feature-rich Android application built with Jetpack Compose, designed to provide a seamless and beautiful experience for reading the Holy Quran. The app focuses on clean design, performance, and user customization.
+Mizan is a modern, feature-rich Android application built with Jetpack Compose, designed to provide a seamless and beautiful experience for reading the Holy Quran. The app focuses on clean design, performance, and user customization.
 
 ##  Features
 
@@ -22,7 +22,7 @@ Quran Reader is a modern, feature-rich Android application built with Jetpack Co
 > Use **translation** feature to change ayah/Surah language. It supports almost 400+ local lang.
 
 ## Screenshots
-## Screenshots
+
 
 | | | |
 |:---:|:---:|:---:|
@@ -96,6 +96,13 @@ The project follows the standard Android Architecture Guidelines:
 ##  License
 
 This project is open-source. Please attribute the API source (Fawaz Ahmed's Quran API) when using or forking.
+
+## Donation
+You can support Mizan development through [buy me a coffee](https://buymeacoffee.com/oi.hotaro)
+
+<a href="https://buymeacoffee.com/oi.hotaro">
+  <img src="https://github.com/user-attachments/assets/f62638ee-9ad9-42c6-b275-a620b4cabe25" width="128" />
+</a>
 
 ## Star History
 
